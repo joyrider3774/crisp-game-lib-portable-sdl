@@ -10,7 +10,7 @@ CPP = gcc
 OPT_LEVEL ?= -O2 
 CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags` -Wno-write-strings
 LDFLAGS ?= -g
-LDLIBS ?=  `$(SDL_CONFIG) --libs`
+LDLIBS ?=  `$(SDL_CONFIG) --libs` -lm
 
 #MINGW does not have X11 and does not require it
 #dont know about cygwin
