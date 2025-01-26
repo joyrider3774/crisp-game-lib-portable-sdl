@@ -18,23 +18,25 @@ static int viewH = DEFAULT_WINDOW_HEIGHT;
 static Uint32 frameticks = 0;
 static float frameTime = 0.0f;
 static Uint32 clearColor = 0;
-static float audioVolume = 0.75f;
-static float oscVolume = 0.75f;
+static float audioVolume = 1.00f;
+static float oscVolume = 0.50f;
 static SDL_Surface *screen = NULL, *view = NULL;
 static int soundOn = 0;
 
 static SDL_AudioSpec audiospec;
 
 typedef struct {
-  float current_step;
-  float step_size;
-  float volume;
-  float duration;
-  float when;
-  int freq;
-  float sampleRate;
-  int playing;
-} oscillator;
+    float current_step;
+    float step_size;
+    float volume;
+    float duration;
+    float when;
+    int freq;
+    float sampleRate;
+    int playing;
+    int stopping;
+    int reserverd;
+ } oscillator;
 
 static oscillator os[numOs];
 
@@ -64,25 +66,39 @@ static void resetCharacterSprite() {
 
 oscillator oscillate(float sampleRate, float freq, float volume, float duration, float when) 
 {
-    oscillator o = 
-    {
-        .sampleRate = sampleRate,
-        .current_step = 0,
-        .volume = volume,
-        .step_size = (2 * M_PI) / (((float)sampleRate / (freq))),
-        .duration = duration,
-        .when = when,
-        .freq = freq,
-        .playing = 0,
-    };
+    oscillator o; 
+    o.sampleRate = sampleRate;
+    o.current_step = 0.0f;
+    o.volume = volume;
+    o.step_size = (2.0f * M_PI) / (((float)sampleRate / (freq)));
+    o.duration = duration;
+    o.when = when;
+    o.freq = freq;
+    o.playing = 0;
+    o.stopping = 0;
+    o.reserverd = 0;
     return o;
 }
 
 Sint16 next(oscillator *os) 
 {
-    os->playing = 1;
     float ret = sinf(os->current_step);
     os->current_step += os->step_size;
+    //lowering volume prevents a certain tick you could hear when only music was playing
+    //because sound was cut off abruptly previously
+    {
+        if((os->stopping == 1))
+        {
+            if(os->volume > 0.0f)
+                os->volume -= 0.005;
+            else
+            {    
+                os->stopping = 0;
+                os->playing = 0;
+                os->reserverd = 0;
+            }
+        }
+    }  
     return (Sint16)truncf(clamp(ret * 32767.0f * os->volume, -32767.0f, 32767.0f));
 }
 
@@ -104,7 +120,9 @@ void md_playTone(float freq, float duration, float when)
             return;
         }
     }
+#ifdef DEBUG
     printf("md_playTone - no free oscililator\n");
+#endif
 }
 
 void md_stopTone() 
@@ -135,23 +153,36 @@ static void audioCallBack(void *ud, Uint8 *stream, int len)
         Sint64 tmp = 0;
         for(int j = 0; j < numOs; j++)
         {          
-            if (os[j].when <= (float)SDL_GetTicks() / 1000.0f)
+            if ((os[j].when <= (float)SDL_GetTicks() / 1000.0f) && (os[j].when + os[j].duration >= (float)SDL_GetTicks() / 1000.0f))
             {
-                if(os[j].when + os[j].duration >= (float)SDL_GetTicks() / 1000.0f)
+                os->playing = 1;
+                numPlaying++;
+                tmp = tmp + next(&os[j]);
+            }
+            else 
+            {
+                if (os[j].when + os[j].duration < (float)SDL_GetTicks() / 1000.0f)
                 {
-                    numPlaying++;
-                    tmp = tmp + next(&os[j]);
+                    if (os[j].playing == 1) 
+                    {
+                        os[j].stopping = 1;
+                        numPlaying++;
+                        tmp = tmp + next(&os[j]);
+                    }
+                    else 
+                    {
+                        os[j].current_step = 0;
+                        os[j].playing = 0;
+                        os[j].stopping = 0;
+                        os[j].duration = 0;
+                        os[j].step_size = 0;
+                        os[j].when = 0;
+                        os[j].volume = 0;
+                        os[j].freq = 0;
+                        os[j].reserverd = 0;
+                    }
                 }
-                else
-                {
-                    os[j].current_step = 0;
-                    os[j].duration = 0;
-                    os[j].step_size = 0;
-                    os[j].when = 0;
-                    os[j].volume = 0;
-                    os[j].freq = 0;
-                    os[j].playing = 0;
-                }
+                
             } 
         }
         if(numPlaying > 0)
