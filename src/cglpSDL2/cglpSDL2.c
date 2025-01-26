@@ -576,6 +576,6 @@ int main(int argc, char **argv)
     {
         SDL_Log("Couldn't initialise SDL!\n");
     }
-return 0;
+    return 0;
 
 }
