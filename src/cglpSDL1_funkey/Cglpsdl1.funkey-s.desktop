@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=cglpsdl1
+Comment=Crisp Games Library Portable
+Terminal=false
+Type=Application
+Exec=cglpsdl1 -f -ns
+Icon=cglpsdl1
+Categories=games
