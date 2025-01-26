@@ -2,7 +2,7 @@
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL2.h"
-#include "float.h"
+#include "CInput.h"
 
 #define SAMPLE_RATE 44100
 #define NUM_SAMPLES 512
@@ -11,8 +11,6 @@
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static int quit = 0;
-static int keys[BUTTON_COUNT];
-static int prevKeys[BUTTON_COUNT];
 static float scale = 1.0f;
 static int viewW = DEFAULT_WINDOW_WIDTH;
 static int viewH = DEFAULT_WINDOW_HEIGHT;
@@ -20,18 +18,16 @@ static int origViewW = DEFAULT_WINDOW_WIDTH;
 static int origViewH = DEFAULT_WINDOW_HEIGHT;
 static Uint64 frameticks = 0;
 static double frameTime = 0.0f;
-static Uint64 soundticks = 0;
-static double soundTime = 0.0f;
 static unsigned char clearColorR = 0;
 static unsigned char clearColorG = 0;
 static unsigned char clearColorB = 0;
-static float audioVolume = 0.75f;
-static float oscVolume = 0.75f;
+static float audioVolume = 1.00f;
+static float oscVolume = 0.50f;
 static int offsetX = 0 ;
 static int offsetY = 0;
 static int soundOn = 0;
 static SDL_AudioDeviceID audioDevice = 0;
-
+CInput *GameInput;
 SDL_Renderer *Renderer = NULL;
 SDL_Window *SdlWindow = NULL;
 
@@ -46,7 +42,9 @@ typedef struct {
   int freq;
   float sampleRate;
   int playing;
-} oscillator;
+  int stopping;
+  int reserverd;
+ } oscillator;
 
 static oscillator os[numOs];
 
@@ -80,25 +78,54 @@ static void resetCharacterSprite() {
 
 oscillator oscillate(float sampleRate, float freq, float volume, float duration, float when) 
 {
-    oscillator o = 
-    {
-        .sampleRate = sampleRate,
-        .current_step = 0,
-        .volume = volume,
-        .step_size = (2.0f * M_PI) / (((float)sampleRate / (freq))),
-        .duration = duration,
-        .when = when,
-        .freq = freq,
-        .playing = 0,
-    };
+    oscillator o; 
+    o.sampleRate = sampleRate;
+    o.current_step = 0.0f;
+    o.volume = volume;
+    o.step_size = (2.0f * M_PI) / (((float)sampleRate / (freq)));
+    o.duration = duration;
+    o.when = when;
+    o.freq = freq;
+    o.playing = 0;
+    o.stopping = 0;
+    o.reserverd = 0;
     return o;
+}
+
+int lowest = numOs;
+
+int freeosc()
+{
+    int ret = 0;
+    for (int i = 0; i < numOs; i++)
+    {
+        if ((os[i].playing == 1) || (os[i].stopping == 1) || (os[i].reserverd == 1))
+            ret++;
+    }
+    if (numOs - ret < lowest)
+       lowest = numOs - ret;
+    return numOs - ret;
 }
 
 Sint16 next(oscillator *os)
 {
-    os->playing = 1;
     float ret = sinf(os->current_step);
     os->current_step += os->step_size;
+    //lowering volume prevents a certain tick you could hear when only music was playing
+    //because sound was cut off abruptly previously
+    {
+        if((os->stopping == 1))
+        {
+            if(os->volume > 0.0f)
+                os->volume -= oscVolume / 150.0f;
+            else
+            {    
+                os->stopping = 0;
+                os->playing = 0;
+                os->reserverd = 0;
+            }
+        }
+    }    
     return (Sint16)truncf(clamp(ret * 32767.0f * os->volume, -32767.0f, 32767.0f));
 }
 
@@ -106,20 +133,19 @@ void md_playTone(float freq, float duration, float when)
 {
     if(soundOn != 1)
         return;
-
-    if(when + duration < soundTime)
-        return;
-    
+   
     for(int i = 0; i < numOs; i++)
     {
-        if(os[i].playing == 0)
+        if((os[i].reserverd == 0))
         {
             os[i] = oscillate(SAMPLE_RATE, freq, oscVolume, duration, when);
-            os[i].playing = 1;
+            os[i].reserverd = 1;
             return;
         }
     }
+#ifdef DEBUG
     SDL_Log("md_playTone - no free oscililator\n");
+#endif
 }
 
 void md_stopTone() 
@@ -129,13 +155,8 @@ void md_stopTone()
 
     for(int i = 0; i < numOs; i++)
     {
-        os[i].current_step = 0;
-        os[i].duration = 0;
-        os[i].step_size = 0;
-        os[i].when = 0;
-        os[i].volume = 0;
-        os[i].freq = 0;
-        os[i].playing = 0;
+        if(os[i].playing == 1)
+            os[i].stopping = 1;
     }
 }
 
@@ -151,28 +172,36 @@ static void audioCallBack(void *ud, Uint8 *stream, int len)
         Sint64 tmp = 0;
         for(int j = 0; j < numOs; j++)
         {          
-            //bad ? placed it inside the loop so soundTime keeps updating as well during the loop 
-            Uint64 soundEndTicks = SDL_GetPerformanceCounter();
-            Uint64 soundPerf = soundEndTicks - soundticks;
-            soundticks = SDL_GetPerformanceCounter();
-            soundTime += (double)soundPerf / (double)SDL_GetPerformanceFrequency(); 
-            if (os[j].when <= soundTime)
+            if ((os[j].when <= (float)SDL_GetTicks() / 1000.0f) && (os[j].when + os[j].duration >= (float)SDL_GetTicks() / 1000.0f))
             {
-                if(os[j].when + os[j].duration >= soundTime)
+                os->playing = 1;
+                numPlaying++;
+                tmp = tmp + next(&os[j]);
+            }
+            else 
+            {
+                if (os[j].when + os[j].duration < (float)SDL_GetTicks() / 1000.0f)
                 {
-                    numPlaying++;
-                    tmp = tmp + next(&os[j]);
+                    if (os[j].playing == 1) 
+                    {
+                        os[j].stopping = 1;
+                        numPlaying++;
+                        tmp = tmp + next(&os[j]);
+                    }
+                    else 
+                    {
+                        os[j].current_step = 0;
+                        os[j].playing = 0;
+                        os[j].stopping = 0;
+                        os[j].duration = 0;
+                        os[j].step_size = 0;
+                        os[j].when = 0;
+                        os[j].volume = 0;
+                        os[j].freq = 0;
+                        os[j].reserverd = 0;
+                    }
                 }
-                else
-                {
-                    os[j].current_step = 0;
-                    os[j].duration = 0;
-                    os[j].step_size = 0;
-                    os[j].when = 0;
-                    os[j].volume = 0;
-                    os[j].freq = 0;
-                    os[j].playing = 0;
-                }
+                
             } 
         }
         if(numPlaying > 0)
@@ -201,8 +230,8 @@ int InitAudio()
     }
 
     for(int i = 0; i < numOs; i++)
-        os[i] = oscillate(SAMPLE_RATE, 0, oscVolume, 0, 0);
-    soundticks = SDL_GetPerformanceCounter();
+        os[i] = oscillate(SAMPLE_RATE, 0, oscVolume, 0, FLT_MAX);
+
     SDL_PauseAudioDevice(audioDevice, 0);
 	return 1;
 }
@@ -210,7 +239,7 @@ int InitAudio()
 
 float md_getAudioTime() 
 {   
-    return (float)(soundTime);
+    return (float)SDL_GetTicks() / 1000.0f;
 }
 
 void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
@@ -341,92 +370,15 @@ void md_consoleLog(char* msg)
 }
 
 void update() {    
-    for(int i = 0; i < BUTTON_COUNT; i++)
-        prevKeys[i] = keys[i];
+    CInput_Update(GameInput);
+    if(GameInput->Buttons.ButQuit)
+        quit = 1;
+        
+    setButtonState(GameInput->Buttons.ButLeft || GameInput->Buttons.ButDpadLeft, GameInput->Buttons.ButRight || GameInput->Buttons.ButDpadRight,
+        GameInput->Buttons.ButUp || GameInput->Buttons.ButDpadUp, GameInput->Buttons.ButDown || GameInput->Buttons.ButDpadDown, 
+        GameInput->Buttons.ButB, GameInput->Buttons.ButA);
     
-    SDL_Event event;
-    while(SDL_PollEvent(&event))
-    {
-        if(event.type == SDL_KEYDOWN)
-        {
-            switch(event.key.keysym.sym)
-            {
-                case BUTTON_A:
-                    keys[BUTTON_A_INDEX] = 1;
-                    break;
-                case BUTTON_B:
-                    keys[BUTTON_B_INDEX] = 1;
-                    break;
-                case BUTTON_LEFT:
-                    keys[BUTTON_LEFT_INDEX] = 1;
-                    break;
-                case BUTTON_RIGHT:
-                    keys[BUTTON_RIGHT_INDEX] = 1;
-                    break;
-                case BUTTON_DOWN:
-                    keys[BUTTON_DOWN_INDEX] = 1;
-                    break;
-                case BUTTON_UP:
-                    keys[BUTTON_UP_INDEX] = 1;
-                    break;
-                case BUTTON_MENU:
-                    keys[BUTTON_MENU_INDEX] = 1;
-                    break;
-                case BUTTON_VOLDOWN:
-                    keys[BUTTON_VOLDOWN_INDEX] = 1;
-                    break;
-                case BUTTON_VOLUP:
-                    keys[BUTTON_VOLUP_INDEX] = 1;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if(event.type == SDL_KEYUP)
-        {
-            switch(event.key.keysym.sym)
-            {
-                case BUTTON_A:
-                    keys[BUTTON_A_INDEX] = 0;
-                    break;
-                case BUTTON_B:
-                    keys[BUTTON_B_INDEX] = 0;
-                    break;
-                case BUTTON_LEFT:
-                    keys[BUTTON_LEFT_INDEX] = 0;
-                    break;
-                case BUTTON_RIGHT:
-                    keys[BUTTON_RIGHT_INDEX] = 0;
-                    break;
-                case BUTTON_DOWN:
-                    keys[BUTTON_DOWN_INDEX] = 0;
-                    break;
-                case BUTTON_UP:
-                    keys[BUTTON_UP_INDEX] = 0;
-                    break;
-                case BUTTON_MENU:
-                    keys[BUTTON_MENU_INDEX] = 0;
-                    break;
-                case BUTTON_VOLDOWN:
-                    keys[BUTTON_VOLDOWN_INDEX] = 0;
-                    break;
-                case BUTTON_VOLUP:
-                    keys[BUTTON_VOLUP_INDEX] = 0;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if(event.type == SDL_QUIT)
-            quit = 1;
-    }
-    
-    setButtonState(keys[BUTTON_LEFT_INDEX] == 1, keys[BUTTON_RIGHT_INDEX] == 1, keys[BUTTON_UP_INDEX] == 1,
-        keys[BUTTON_DOWN_INDEX] == 1, keys[BUTTON_B_INDEX] == 1, keys[BUTTON_A_INDEX] == 1);
-    
-    if ((prevKeys[BUTTON_MENU_INDEX] == 0) && (keys[BUTTON_MENU_INDEX] == 1))
+    if ((!GameInput->PrevButtons.ButBack) && (GameInput->Buttons.ButBack))
     {
         if (!isInMenu)
             goToMenu();
@@ -434,14 +386,14 @@ void update() {
             quit = 1;
     }
  
-    if ((prevKeys[BUTTON_VOLDOWN_INDEX] == 0) && (keys[BUTTON_VOLDOWN_INDEX] == 1))
+    if ((!GameInput->PrevButtons.ButLB) && (GameInput->Buttons.ButLB))
     {
         audioVolume -= 0.05f;
         if(audioVolume < 0.0f)
             audioVolume = 0.0f;    
     }
 
-    if ((prevKeys[BUTTON_VOLUP_INDEX] == 0) && (keys[BUTTON_VOLUP_INDEX] == 1))
+    if ((!GameInput->PrevButtons.ButRB) && (GameInput->Buttons.ButRB))
     {
         audioVolume += 0.05f;
         if(audioVolume > 1.0f)
@@ -449,6 +401,7 @@ void update() {
     }
 
     updateFrame();
+    printf("%d %d\n", lowest, freeosc());
     SDL_RenderPresent(Renderer);
 }
 
@@ -505,7 +458,7 @@ int main(int argc, char **argv)
     }
 
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) == 0)
     {
         SDL_Log("SDL Succesfully initialized\n");
 
@@ -541,12 +494,14 @@ int main(int argc, char **argv)
                     SDL_Log("Succesfully opened audio\n");
                 else
                     SDL_Log("Failed to open audio\n");
+
                 initCharacterSprite();
                 initGame();
+                GameInput = CInput_Create();
                 while(quit == 0)
                 {
                     frameticks = SDL_GetPerformanceCounter();
-                    update();                
+                    update();
                     if(quit == 0)
                     {
                         Uint64 frameEndTicks = SDL_GetPerformanceCounter();
@@ -554,9 +509,10 @@ int main(int argc, char **argv)
                         frameTime = FramePerf / (double)SDL_GetPerformanceFrequency() * 1000.0f;
                         double delay = 1000.0f / FPS - frameTime;
                         if (delay > 0.0f)
-                            SDL_Delay((Uint32)(delay));                            
+                            SDL_Delay((Uint32)(delay));                                                   
                     }
                 }           
+                CInput_Destroy(GameInput);
                 resetCharacterSprite();
                 SDL_DestroyRenderer(Renderer);
             }
