@@ -4,23 +4,24 @@
 #include "cglpSDL1.h"
 
 #define SAMPLE_RATE 44100
-#define BUFFER_SIZE (SAMPLE_RATE / FPS)
-#define numOs 128
+#define NUM_SAMPLES 512
+#define numOs 64
 
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static int quit = 0;
 static int keys[SDLK_LAST];
+static int prevKeys[SDLK_LAST];
 static float scale = 1.0f;
 static int viewW = DEFAULT_WINDOW_WIDTH;
 static int viewH = DEFAULT_WINDOW_HEIGHT;
 static Uint32 frameticks = 0;
 static float frameTime = 0.0f;
 static Uint32 clearColor = 0;
-static int prevMenu = 0;
 static float audioVolume = 0.75f;
-static int osIndex = 0;
+static float oscVolume = 0.75f;
 static SDL_Surface *screen = NULL, *view = NULL;
+static int soundOn = 0;
 
 static SDL_AudioSpec audiospec;
 
@@ -32,6 +33,7 @@ typedef struct {
   float when;
   int freq;
   float sampleRate;
+  int playing;
 } oscillator;
 
 static oscillator os[numOs];
@@ -71,30 +73,45 @@ oscillator oscillate(float sampleRate, float freq, float volume, float duration,
         .duration = duration,
         .when = when,
         .freq = freq,
+        .playing = 0,
     };
     return o;
 }
 
-Sint16 next(oscillator *os) {
+Sint16 next(oscillator *os) 
+{
+    os->playing = 1;
     float ret = sinf(os->current_step);
     os->current_step += os->step_size;
-    return (Sint16)truncf(clamp(ret * 32767.0, -32767.0, 32767.0)* os->volume);
+    return (Sint16)truncf(clamp(ret * 32767.0f * os->volume, -32767.0f, 32767.0f));
 }
+
 
 void md_playTone(float freq, float duration, float when) 
 {
-    if(when + duration < (float)SDL_GetTicks() / 1000.0f)
+    if(soundOn != 1)
         return;
 
-    os[osIndex] = oscillate(SAMPLE_RATE, freq, audioVolume, duration, when);
-    osIndex++;
-    if(osIndex == numOs)
-        osIndex = 0;
-
+    if(when + duration < (float)SDL_GetTicks() / 1000.0f)
+        return;
+    
+    for(int i = 0; i < numOs; i++)
+    {
+        if(os[i].playing == 0)
+        {
+            os[i] = oscillate(SAMPLE_RATE, freq, oscVolume, duration, when);
+            os[i].playing = 1;
+            return;
+        }
+    }
+    printf("md_playTone - no free oscililator\n");
 }
 
 void md_stopTone() 
 {
+    if(soundOn != 1)
+        return;
+
     for(int i = 0; i < numOs; i++)
     {
         os[i].current_step = 0;
@@ -103,8 +120,8 @@ void md_stopTone()
         os[i].when = 0;
         os[i].volume = 0;
         os[i].freq = 0;
+        os[i].playing = 0;
     }
-    osIndex = 0;
 }
 
 static void audioCallBack(void *ud, Uint8 *stream, int len)
@@ -112,15 +129,18 @@ static void audioCallBack(void *ud, Uint8 *stream, int len)
     memset(stream, 0, len);
     Sint16* fstream = (Sint16*)stream; 
     for (int i = 0; i < len>>1; i++) 
-    {       
+    {          
         fstream[i] = 0;
+        int numPlaying = 0;
+        Sint64 tmp = 0;
         for(int j = 0; j < numOs; j++)
-        {            
-            if (os[j].when <= (float)SDL_GetTicks()/1000.0f)
+        {          
+            if (os[j].when <= (float)SDL_GetTicks() / 1000.0f)
             {
-                if(os[j].when + os[j].duration >= (float)SDL_GetTicks()/1000.0f)
+                if(os[j].when + os[j].duration >= (float)SDL_GetTicks() / 1000.0f)
                 {
-                    fstream[i] = clamp((fstream[i]>> 1) + (next(&os[j])>> 1), -32767.0 , 32767.0);
+                    numPlaying++;
+                    tmp = tmp + next(&os[j]);
                 }
                 else
                 {
@@ -130,32 +150,38 @@ static void audioCallBack(void *ud, Uint8 *stream, int len)
                     os[j].when = 0;
                     os[j].volume = 0;
                     os[j].freq = 0;
+                    os[j].playing = 0;
                 }
             } 
         }
-        fstream[i] = (Sint16)((float)fstream[i]);
+        if(numPlaying > 0)
+            fstream[i] = (Sint16)((clamp(((float)tmp / (float)numPlaying) * audioVolume, -32767.0f, 32767.0f)));
     }
 }
 
 int InitAudio()
 {
 	SDL_AudioSpec as;
-	as.format = AUDIO_S16;
+	as.format = AUDIO_S16SYS;
     as.channels = 1;
     as.freq = SAMPLE_RATE;
-    as.samples = BUFFER_SIZE;
+    as.samples = NUM_SAMPLES;
 	as.callback = &audioCallBack;
+    as.userdata = NULL;
 	if(SDL_OpenAudio(&as, &audiospec) < 0)
 		return -1;
 
 	if(audiospec.format != AUDIO_S16SYS)
+    {
+        SDL_CloseAudio();
 		return -1;
+    }
 
     for(int i = 0; i < numOs; i++)
-        os[i] = oscillate(SAMPLE_RATE, 0, 0.75f, 0, 0);
+        os[i] = oscillate(SAMPLE_RATE, 0, oscVolume, 0, 0);
 
     SDL_PauseAudio(0);
-	return 0;
+	return 1;
 }
 
 
@@ -275,7 +301,11 @@ void md_consoleLog(char* msg)
     printf(msg); 
 }
 
-void update() {
+void update() 
+{
+    for(int i = 0; i < SDLK_LAST; i++)
+        prevKeys[i] = keys[i];
+
     SDL_Event event;
     while(SDL_PollEvent(&event))
     {
@@ -292,21 +322,57 @@ void update() {
         if(event.type == SDL_QUIT)
             quit = 1;
     }
+
     setButtonState(keys[BUTTON_LEFT] == 1, keys[BUTTON_RIGHT] == 1, keys[BUTTON_UP] == 1,
         keys[BUTTON_DOWN] == 1, keys[BUTTON_B] == 1, keys[BUTTON_A] == 1);
-    updateFrame();    
-    SDL_Rect src = {0, 0, viewW, viewH};
-    SDL_Rect dst = {(WINDOW_WIDTH - viewW) >> 1, (WINDOW_HEIGHT - viewH) >> 1, viewW, viewH};
-    SDL_BlitSurface(view, &src, screen, &dst);
-    SDL_Flip(screen);
-    if ((prevMenu == 0) && (keys[BUTTON_MENU] == 1))
+    
+    if ((prevKeys[BUTTON_VOLDOWN] == 0) && (keys[BUTTON_VOLDOWN] == 1))
+    {
+        audioVolume -= 0.05f;
+        if(audioVolume < 0.0f)
+            audioVolume = 0.0f;    
+    }
+
+    if ((prevKeys[BUTTON_VOLUP] == 0) && (keys[BUTTON_VOLUP] == 1))
+    {
+        audioVolume += 0.05f;
+        if(audioVolume > 1.0f)
+            audioVolume = 1.0f;     
+    }
+
+    if ((prevKeys[BUTTON_MENU] == 0) && (keys[BUTTON_MENU] == 1))
     {
         if (!isInMenu)
             goToMenu();
         else
             quit = 1;
     }
-    prevMenu = keys[BUTTON_MENU];
+
+    updateFrame();    
+    SDL_Rect src = {0, 0, viewW, viewH};
+    SDL_Rect dst = {(WINDOW_WIDTH - viewW) >> 1, (WINDOW_HEIGHT - viewH) >> 1, viewW, viewH};
+    SDL_BlitSurface(view, &src, screen, &dst);
+    SDL_Flip(screen);
+
+}
+
+void printHelp(char* exe)
+{
+    char *binaryName = strrchr(exe, '/');
+    if (!binaryName)
+        binaryName = strrchr(exe, '\\');
+    if(binaryName)
+        ++binaryName;
+
+    printf("Crisp Game Lib Portable Sdl2 Version\n");
+    printf("Usage: %s <command1> <command2> ...\n", binaryName);
+    printf("\n");
+    printf("Commands:\n");
+    printf("  -w <WIDTH>: use <WIDTH> as window width\n");
+    printf("  -h <HEIGHT>: use <HEIGHT> as window height\n");
+    printf("  -f: Run fullscreen\n");
+    printf("  -ns: No Sound\n");
+    printf("  -a: Use hardware (accelerated) surfaces\n");
 }
 
 int main(int argc, char **argv)
@@ -316,10 +382,21 @@ int main(int argc, char **argv)
         printf("SDL Succesfully initialized\n");
 		bool fullScreen = false;
         bool useHWSurface = false;
+        bool noAudioInit = false;
 		for (int i=0; i < argc; i++)
 		{
+            if((strcasecmp(argv[i], "-?") == 0) || (strcasecmp(argv[i], "--?") == 0) || 
+                (strcasecmp(argv[i], "/?") == 0) || (strcasecmp(argv[i], "-help") == 0) || (strcasecmp(argv[i], "--help") == 0))
+            {
+                printHelp(argv[0]);
+                return 0;
+            }
+
 			if(strcasecmp(argv[i], "-f") == 0)
 				fullScreen = true;
+
+            if(strcasecmp(argv[i], "-ns") == 0)
+				noAudioInit = true;
             
             if(strcasecmp(argv[i], "-a") == 0)
 				useHWSurface = true;
@@ -347,24 +424,27 @@ int main(int argc, char **argv)
 			SDL_WM_SetCaption( "Crisp Game Lib Portable Sdl1", NULL);
 			printf("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
             SDL_ShowCursor(SDL_DISABLE);
-            if(InitAudio() == 0)
-            {
+            if(!noAudioInit)
+                soundOn = InitAudio();
+            if(soundOn == 1)
                 printf("Succesfully opened audio\n");
-                initCharacterSprite();
-                initGame();
-                while(quit == 0)
+            else
+                printf("Failed to open audio\n");
+            initCharacterSprite();
+            initGame();
+            while(quit == 0)
+            {
+                frameticks = SDL_GetTicks();
+                update();                
+                if(quit == 0)
                 {
-                    frameticks = SDL_GetTicks();
-                    update();                
-                    if(quit == 0)
-                    {
-                        frameTime = SDL_GetTicks() - frameticks;
-                        float delay = 1000.0f / FPS - frameTime;
-                        if (delay > 0.0f)
-                            SDL_Delay((Uint32)(delay));
-                    }
-                }           
-            }
+                    frameTime = SDL_GetTicks() - frameticks;
+                    float delay = 1000.0f / FPS - frameTime;
+                    if (delay > 0.0f)
+                        SDL_Delay((Uint32)(delay));
+                }
+            } 
+        
             resetCharacterSprite();
             if(view)
                 SDL_FreeSurface(view);
