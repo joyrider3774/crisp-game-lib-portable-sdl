@@ -4,8 +4,10 @@
 #include "cglpSDL1.h"
 
 #define SAMPLE_RATE 44100
-#define NUM_SAMPLES 512
-#define numOs 64
+#define BUFFER_SIZE 512
+#define MAX_NOTES 128
+#define AMPLITUDE 10000
+#define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
 
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
@@ -19,32 +21,31 @@ static Uint32 frameticks = 0;
 static float frameTime = 0.0f;
 static Uint32 clearColor = 0;
 static float audioVolume = 1.00f;
-static float oscVolume = 0.50f;
 static SDL_Surface *screen = NULL, *view = NULL;
 static int soundOn = 0;
 
-static SDL_AudioSpec audiospec;
+static SDL_AudioSpec audiospec = {0};
 
 typedef struct {
-    float current_step;
-    float step_size;
-    float volume;
-    float duration;
-    float when;
-    int freq;
-    float sampleRate;
-    int playing;
-    int stopping;
-    int reserverd;
- } oscillator;
+    float frequency; // Frequency of the note in Hz
+    float when;      // Time in seconds to start playing the note
+    float duration;  // Duration in seconds to play the note
+    bool active;     // Whether this note is currently active
+} Note;
 
-static oscillator os[numOs];
+typedef struct {
+    Note notes[MAX_NOTES]; // List of scheduled notes
+    int note_count;        // Current number of notes
+    float time;            // Current playback time in seconds
+} AudioState;
 
 typedef struct 
 {
     SDL_Surface *sprite;
     int hash;
 } CharaterSprite;
+
+AudioState audio_state = {0};
 
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
@@ -64,142 +65,136 @@ static void resetCharacterSprite() {
     characterSpritesCount = 0;
 }
 
-oscillator oscillate(float sampleRate, float freq, float volume, float duration, float when) 
-{
-    oscillator o; 
-    o.sampleRate = sampleRate;
-    o.current_step = 0.0f;
-    o.volume = volume;
-    o.step_size = (2.0f * M_PI) / (((float)sampleRate / (freq)));
-    o.duration = duration;
-    o.when = when;
-    o.freq = freq;
-    o.playing = 0;
-    o.stopping = 0;
-    o.reserverd = 0;
-    return o;
+// Sine wave oscillator function
+float generate_sine_wave(float frequency, float time) {
+    return sinf(2.0f * M_PI * frequency * time);
 }
 
-Sint16 next(oscillator *os) 
-{
-    float ret = sinf(os->current_step);
-    os->current_step += os->step_size;
-    //lowering volume prevents a certain tick you could hear when only music was playing
-    //because sound was cut off abruptly previously
-    {
-        if((os->stopping == 1))
-        {
-            if(os->volume > 0.0f)
-                os->volume -= 0.005;
-            else
-            {    
-                os->stopping = 0;
-                os->playing = 0;
-                os->reserverd = 0;
+// Audio callback
+static void audio_callback(void *userdata, Uint8 *stream, int len) {
+    AudioState *audio_state = (AudioState *)userdata;
+    int16_t *buffer = (int16_t *)stream;
+    int sample_count = len / sizeof(int16_t);
+
+    // Intermediate float buffer to accumulate the summed waveforms
+    float float_buffer[sample_count];
+    for (int i = 0; i < sample_count; i++) {
+        float_buffer[i] = 0.0f;
+    }
+
+    // Track active notes
+    int active_note_count = 0;
+
+    // Sum of all active notes' waveforms
+    for (int i = 0; i < audio_state->note_count; i++) {
+        Note *note = &audio_state->notes[i];
+
+        if (!note->active && audio_state->time >= note->when) {
+            note->active = true; // Activate the note when the time comes
+        }
+
+        if (note->active) {
+            float note_end = note->when + note->duration;
+            if (audio_state->time > note_end + FADE_OUT_TIME) {
+                note->active = false; // Mark note as inactive after fade-out
+                continue; // Skip to the next note
+            }
+
+            // Generate audio for active notes
+            for (int j = 0; j < sample_count; j++) {
+                float t = audio_state->time + (float)j / SAMPLE_RATE;
+                if (t >= note->when) {
+                    float amplitude = audioVolume; // Apply global volume
+
+                    // Apply fade-out if the note is in its fade-out period
+                    if (t > note_end) {
+                        float fade_time = t - note_end;
+                        amplitude *= (1.0f - (fade_time / FADE_OUT_TIME));
+                        if (amplitude < 0.0f) amplitude = 0.0f; // Ensure no negative values
+                    }
+
+                    // Add this note's waveform to the float buffer
+                    float_buffer[j] += generate_sine_wave(note->frequency, t) * AMPLITUDE * amplitude;
+                }
             }
         }
-    }  
-    return (Sint16)truncf(clamp(ret * 32767.0f * os->volume, -32767.0f, 32767.0f));
+
+        // Always add notes that are either active or scheduled for the future
+        if (note->active || (note->when > audio_state->time)) {
+            audio_state->notes[active_note_count++] = *note;
+        }
+    }
+
+    // Update the note count to reflect only active notes
+    audio_state->note_count = active_note_count;
+
+    // Find the maximum amplitude in the float buffer and normalize
+    float max_amplitude = 0.0f;
+    for (int i = 0; i < sample_count; i++) {
+        if (float_buffer[i] > max_amplitude) max_amplitude = float_buffer[i];
+        if (float_buffer[i] < -max_amplitude) max_amplitude = -float_buffer[i];
+    }
+
+    // If the maximum amplitude exceeds the allowed range, scale it down
+    if (max_amplitude > 32767.0f) {
+        float scale_factor = 32767.0f / max_amplitude;
+        for (int i = 0; i < sample_count; i++) {
+            // Normalize and directly convert to int16_t
+            buffer[i] = (int16_t)(float_buffer[i] * scale_factor);
+        }
+    } else {
+        // If there's no clipping, just convert to int16_t directly
+        for (int i = 0; i < sample_count; i++) {
+            buffer[i] = (int16_t)float_buffer[i];
+        }
+    }
+
+    // Update the current playback time
+    audio_state->time += (float)sample_count / SAMPLE_RATE;
 }
 
+void schedule_note(AudioState *audio_state, float frequency, float when, float duration) {
+    if (audio_state->note_count >= MAX_NOTES) {
+        return;
+    }
+    
+    Note *note = &audio_state->notes[audio_state->note_count++];
+    note->frequency = frequency;
+    note->when = when;
+    note->duration = duration;
+    note->active = false;
+}
 
 void md_playTone(float freq, float duration, float when) 
 {
     if(soundOn != 1)
         return;
-
-    if(when + duration < (float)SDL_GetTicks() / 1000.0f)
-        return;
-    
-    for(int i = 0; i < numOs; i++)
-    {
-        if(os[i].playing == 0)
-        {
-            os[i] = oscillate(SAMPLE_RATE, freq, oscVolume, duration, when);
-            os[i].playing = 1;
-            return;
-        }
-    }
-#ifdef DEBUG
-    printf("md_playTone - no free oscililator\n");
-#endif
+   
+    schedule_note(&audio_state, freq, when, duration);
 }
 
 void md_stopTone() 
 {
-    if(soundOn != 1)
+    if (soundOn != 1)
         return;
 
-    for(int i = 0; i < numOs; i++)
+    for (int i = 0; i < audio_state.note_count; i++) 
     {
-        os[i].current_step = 0;
-        os[i].duration = 0;
-        os[i].step_size = 0;
-        os[i].when = 0;
-        os[i].volume = 0;
-        os[i].freq = 0;
-        os[i].playing = 0;
-    }
-}
-
-static void audioCallBack(void *ud, Uint8 *stream, int len)
-{
-    memset(stream, 0, len);
-    Sint16* fstream = (Sint16*)stream; 
-    for (int i = 0; i < len>>1; i++) 
-    {          
-        fstream[i] = 0;
-        int numPlaying = 0;
-        Sint64 tmp = 0;
-        for(int j = 0; j < numOs; j++)
-        {          
-            if ((os[j].when <= (float)SDL_GetTicks() / 1000.0f) && (os[j].when + os[j].duration >= (float)SDL_GetTicks() / 1000.0f))
-            {
-                os->playing = 1;
-                numPlaying++;
-                tmp = tmp + next(&os[j]);
-            }
-            else 
-            {
-                if (os[j].when + os[j].duration < (float)SDL_GetTicks() / 1000.0f)
-                {
-                    if (os[j].playing == 1) 
-                    {
-                        os[j].stopping = 1;
-                        numPlaying++;
-                        tmp = tmp + next(&os[j]);
-                    }
-                    else 
-                    {
-                        os[j].current_step = 0;
-                        os[j].playing = 0;
-                        os[j].stopping = 0;
-                        os[j].duration = 0;
-                        os[j].step_size = 0;
-                        os[j].when = 0;
-                        os[j].volume = 0;
-                        os[j].freq = 0;
-                        os[j].reserverd = 0;                                                
-                    }
-                }
-                
-            } 
-        }
-        if(numPlaying > 0)
-            fstream[i] = (Sint16)((clamp(((float)tmp / (float)numPlaying) * audioVolume, -32767.0f, 32767.0f)));
+        audio_state.notes[i].duration = 0;
     }
 }
 
 int InitAudio()
 {
-	SDL_AudioSpec as;
-	as.format = AUDIO_S16SYS;
-    as.channels = 1;
-    as.freq = SAMPLE_RATE;
-    as.samples = NUM_SAMPLES;
-	as.callback = &audioCallBack;
-    as.userdata = NULL;
-	if(SDL_OpenAudio(&as, &audiospec) < 0)
+	SDL_AudioSpec spec = {0};
+    spec.freq = SAMPLE_RATE;
+    spec.format = AUDIO_S16SYS; // Use signed 16-bit audio
+    spec.channels = 1;         // Mono audio
+    spec.samples = BUFFER_SIZE;
+    spec.callback = audio_callback;
+    spec.userdata = &audio_state;
+
+	if(SDL_OpenAudio(&spec, &audiospec) < 0)
 		return -1;
 
 	if(audiospec.format != AUDIO_S16SYS)
@@ -208,9 +203,6 @@ int InitAudio()
 		return -1;
     }
 
-    for(int i = 0; i < numOs; i++)
-        os[i] = oscillate(SAMPLE_RATE, 0, oscVolume, 0, 0);
-
     SDL_PauseAudio(0);
 	return 1;
 }
@@ -218,7 +210,7 @@ int InitAudio()
 
 float md_getAudioTime() 
 { 
-    return (float)SDL_GetTicks() / 1000.0f;
+    return audio_state.time;
 }
 
 void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
@@ -456,11 +448,13 @@ int main(int argc, char **argv)
 			printf("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
             SDL_ShowCursor(SDL_DISABLE);
             if(!noAudioInit)
+            {
                 soundOn = InitAudio();
-            if(soundOn == 1)
-                printf("Succesfully opened audio\n");
-            else
-                printf("Failed to open audio\n");
+                if(soundOn == 1)
+                    printf("Succesfully opened audio\n");
+                else
+                    printf("Failed to open audio\n");
+            }
             initCharacterSprite();
             initGame();
             while(quit == 0)

@@ -13,7 +13,7 @@ LDFLAGS ?= -g
 LDLIBS ?=  `$(SDL_CONFIG) --libs` -lm 
 
 ifeq ($(OS),Windows_NT)
-LDLIBS += -mwindows
+LDLIBS += -mconsole
 endif
 
 #MINGW does not have X11 and does not require it
