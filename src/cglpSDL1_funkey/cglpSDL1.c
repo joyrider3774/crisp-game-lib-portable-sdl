@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include "machineDependent.h"
 #include "cglp.h"
+#include "trig_normalization.h"
 #include "cglpSDL1.h"
 
 #define SAMPLE_RATE 44100
@@ -67,7 +68,7 @@ static void resetCharacterSprite() {
 
 // Sine wave oscillator function
 float generate_sine_wave(float frequency, float time) {
-    return sinf(2.0f * M_PI * frequency * time);
+    return normalized_sinf(2.0f * M_PI * frequency * time);
 }
 
 // Audio callback
@@ -153,8 +154,10 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
     audio_state->time += (float)sample_count / SAMPLE_RATE;
 }
 
-void schedule_note(AudioState *audio_state, float frequency, float when, float duration) {
-    if (audio_state->note_count >= MAX_NOTES) {
+void schedule_note(AudioState *audio_state, float frequency, float when, float duration) 
+{
+    if (audio_state->note_count >= MAX_NOTES)
+    {
         return;
     }
     
