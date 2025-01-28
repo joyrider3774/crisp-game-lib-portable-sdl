@@ -106,7 +106,7 @@ Note: Some features are limited due to device resource limitations.
 
 1. (Cross)compile using provided `Makefile` by running make 
 
-ported by [Joyrider3774](https://github.com/joyrider3774)
+- ported by [Joyrider3774](https://github.com/joyrider3774)
 
 ### Any Device supporting SDL1 or SDL2
 
@@ -118,7 +118,7 @@ ported by [Joyrider3774](https://github.com/joyrider3774)
 
 1. Checkout `binary --help` for information on commandline parameters
 
-ported by [Joyrider3774](https://github.com/joyrider3774)
+- ported by [Joyrider3774](https://github.com/joyrider3774)
 
 ### Browser
 
