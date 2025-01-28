@@ -104,7 +104,7 @@ Note: Some features are limited due to device resource limitations.
 
 1. Edit paths to funkey sdk in `funkey.mk`
 
-1. (Cross)compile using provided `Makefile` by running make 
+1. (Cross)compile using provided `Makefile` by running make or package to an opk file using `Package.sh` 
 
 - ported by [Joyrider3774](https://github.com/joyrider3774)
 
