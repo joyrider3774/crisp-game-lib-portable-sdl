@@ -6,7 +6,7 @@ SRC=$(wildcard *.c $(foreach fd, $(SRC_DIR), $(fd)/*.c))
 OBJS=$(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))
 
 SDL_CONFIG=sdl2-config
-CPP = gcc
+CC = gcc
 OPT_LEVEL ?= -O2 
 CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags` -Wno-write-strings
 LDFLAGS ?= -g
@@ -29,11 +29,11 @@ endif
 all: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CPP) $(LDFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LDLIBS)
+	$(CC) $(LDFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: %.c
 	mkdir -p $(@D)
-	$(CPP) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJ_DIR):
 	mkdir -p $@
