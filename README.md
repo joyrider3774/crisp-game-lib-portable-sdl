@@ -100,7 +100,7 @@ Note: Some features are limited due to device resource limitations.
 
 1. Copy [./src/lib/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/lib) and [./src/games/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/games) files to the directory
 
-1  Copy [./src/cglpSDL1_funkey](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1_funkey) directory overwriting files (or compare the differences)
+1.  Copy [./src/cglpSDL1_funkey](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1_funkey) directory overwriting files (or compare the differences)
 
 1. Edit paths to funkey sdk in `funkey.mk`
 
