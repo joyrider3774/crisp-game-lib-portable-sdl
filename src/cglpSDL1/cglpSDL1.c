@@ -23,6 +23,7 @@ static Uint32 clearColor = 0;
 static float audioVolume = 1.00f;
 static SDL_Surface *screen = NULL, *view = NULL;
 static int soundOn = 0;
+static int useBugSound = 1;
 
 static SDL_AudioSpec audiospec = {0};
 
@@ -65,9 +66,37 @@ static void resetCharacterSprite() {
     characterSpritesCount = 0;
 }
 
+// Function to normalize angle to the range [0, 2π)
+#define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
+
+
+// Simulate buggy sinf: restricts output to 0, 1, -1 based on 90° increments
+float buggy_sinf(float angle) 
+{
+    NORMALIZE_ANGLE(angle);  // Normalize angle to [0, 2π)
+
+    // Map angle to nearest 90° (π/2 radians)
+    if (angle < M_PI_4 || angle >= (2 * M_PI - M_PI_4)) 
+    {
+        return 0.0f;  // Closest to 0° or 360°
+    } else if (angle < (M_PI_2 + M_PI_4)) {
+        return 1.0f;  // Closest to 90°
+    } else if (angle < (M_PI + M_PI_4)) {
+        return 0.0f;  // Closest to 180°
+    } else if (angle < (3 * M_PI_2 + M_PI_4)) {
+        return -1.0f; // Closest to 270°
+    }
+
+    return 0.0f;  // Default fallback
+}
+
 // Sine wave oscillator function
-float generate_sine_wave(float frequency, float time) {
-    return sinf(2.0f * M_PI * frequency * time);
+float generate_sine_wave(float frequency, float time) 
+{
+    if(useBugSound == 1)
+        return buggy_sinf(2.0f * M_PI * frequency * time);
+    else
+        return sinf(2.0f * M_PI * frequency * time);
 }
 
 // Audio callback
@@ -373,6 +402,16 @@ void update()
         else
             quit = 1;
     }
+
+    if ((prevKeys[BUTTON_SOUNDSWITCH] == 0) && (keys[BUTTON_SOUNDSWITCH] == 1))
+    {
+        if(useBugSound == 1)
+            useBugSound = 0;
+        else
+            useBugSound = 1;
+    }
+
+    
 
     updateFrame();    
     SDL_Rect src = {0, 0, viewW, viewH};
