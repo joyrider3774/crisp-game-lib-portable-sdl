@@ -12,6 +12,7 @@ struct SButtons
 		 ButBack, ButStart, ButA, ButB,
 		 ButX, ButY, ButLB, ButRB, ButFullscreen, ButQuit, ButRT, ButLT,
 		 RenderReset;
+	int MouseX, MouseY;
 };
 typedef struct SButtons SButtons;
 

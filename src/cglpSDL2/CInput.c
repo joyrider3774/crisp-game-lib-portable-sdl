@@ -118,6 +118,9 @@ void CInput_HandleKeyboardEvent(CInput *Input, int Key, bool Value)
 		case BUTTON_B:
 			Input->Buttons.ButB = Value;
 			break;
+		case BUTTON_SOUNDSWITCH:
+			Input->Buttons.ButY = Value;
+			break;
 		default:
 			break;
 	}
@@ -199,6 +202,21 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 	}
 }
 
+void CInput_HandleMouseEvent(CInput *Input, int Button, bool Value)
+{
+	switch (Button)
+	{
+		case SDL_BUTTON_LEFT:
+			Input->Buttons.ButA = Value;
+			break;
+		case SDL_BUTTON_RIGHT:
+			Input->Buttons.ButB = Value;
+			break;
+		default:
+			break;
+	}
+}
+
 void CInput_Update(CInput *Input)
 {
 	SDL_Event Event;
@@ -243,12 +261,20 @@ void CInput_Update(CInput *Input)
 
 		if (Event.type == SDL_KEYDOWN)
 			CInput_HandleKeyboardEvent(Input, Event.key.keysym.sym, true);
-	}
+		
+		if (Event.type == SDL_MOUSEBUTTONDOWN)
+			CInput_HandleMouseEvent(Input, Event.button.button, true);
 
+		if (Event.type == SDL_MOUSEBUTTONUP)
+			CInput_HandleMouseEvent(Input, Event.button.button, false);
+	}
+	SDL_GetMouseState(&Input->Buttons.MouseX, &Input->Buttons.MouseY);
 }
 
 void CInput_ResetButtons(CInput *Input)
 {
+	Input->Buttons.MouseX = 0;
+	Input->Buttons.MouseY = 0;
 	Input->Buttons.ButLeft = false;
 	Input->Buttons.ButRight = false;
 	Input->Buttons.ButUp = false;

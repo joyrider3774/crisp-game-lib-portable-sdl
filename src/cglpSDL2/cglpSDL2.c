@@ -27,6 +27,7 @@ static float audioVolume = 1.00f;
 static int offsetX = 0 ;
 static int offsetY = 0;
 static int soundOn = 0;
+static int useBugSound = 1;
 static SDL_AudioDeviceID audioDevice = 0;
 CInput *GameInput;
 SDL_Renderer *Renderer = NULL;
@@ -76,9 +77,37 @@ static void resetCharacterSprite() {
     characterSpritesCount = 0;
 }
 
+// Function to normalize angle to the range [0, 2π)
+#define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
+
+
+// Simulate buggy sinf: restricts output to 0, 1, -1 based on 90° increments
+float buggy_sinf(float angle) 
+{
+    NORMALIZE_ANGLE(angle);  // Normalize angle to [0, 2π)
+
+    // Map angle to nearest 90° (π/2 radians)
+    if (angle < M_PI_4 || angle >= (2 * M_PI - M_PI_4)) 
+    {
+        return 0.0f;  // Closest to 0° or 360°
+    } else if (angle < (M_PI_2 + M_PI_4)) {
+        return 1.0f;  // Closest to 90°
+    } else if (angle < (M_PI + M_PI_4)) {
+        return 0.0f;  // Closest to 180°
+    } else if (angle < (3 * M_PI_2 + M_PI_4)) {
+        return -1.0f; // Closest to 270°
+    }
+
+    return 0.0f;  // Default fallback
+}
+
 // Sine wave oscillator function
-float generate_sine_wave(float frequency, float time) {
-    return sinf(2.0f * M_PI * frequency * time);
+float generate_sine_wave(float frequency, float time) 
+{
+    if(useBugSound == 1)
+        return buggy_sinf(2.0f * M_PI * frequency * time);
+    else
+        return sinf(2.0f * M_PI * frequency * time);
 }
 
 // Audio callback
@@ -112,11 +141,13 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
             }
 
             // Generate audio for active notes
-            for (int j = 0; j < sample_count; j++) {
+            for (int j = 0; j < sample_count; j++) 
+            {
+                int numtones = 0;
                 float t = audio_state->time + (float)j / SAMPLE_RATE;
                 if (t >= note->when) {
                     float amplitude = audioVolume; // Apply global volume
-
+                    numtones++;
                     // Apply fade-out if the note is in its fade-out period
                     if (t > note_end) {
                         float fade_time = t - note_end;
@@ -127,6 +158,8 @@ static void audio_callback(void *userdata, Uint8 *stream, int len) {
                     // Add this note's waveform to the float buffer
                     float_buffer[j] += generate_sine_wave(note->frequency, t) * AMPLITUDE * amplitude;
                 }
+                float_buffer[j]  = float_buffer[j]  / numtones;
+                
             }
         }
 
@@ -360,10 +393,14 @@ void update() {
     CInput_Update(GameInput);
     if(GameInput->Buttons.ButQuit)
         quit = 1;
-        
+    
     setButtonState(GameInput->Buttons.ButLeft || GameInput->Buttons.ButDpadLeft, GameInput->Buttons.ButRight || GameInput->Buttons.ButDpadRight,
         GameInput->Buttons.ButUp || GameInput->Buttons.ButDpadUp, GameInput->Buttons.ButDown || GameInput->Buttons.ButDpadDown, 
         GameInput->Buttons.ButB, GameInput->Buttons.ButA);
+
+    float mouseX = ((GameInput->Buttons.MouseX - offsetX) / scale);
+    float mouseY = ((GameInput->Buttons.MouseY - offsetY) / scale);
+    setMousePos(mouseX, mouseY);
     
     if ((!GameInput->PrevButtons.ButBack) && (GameInput->Buttons.ButBack))
     {
@@ -385,6 +422,14 @@ void update() {
         audioVolume += 0.05f;
         if(audioVolume > 1.0f)
             audioVolume = 1.0f;     
+    }
+
+    if ((!GameInput->PrevButtons.ButY) && (GameInput->Buttons.ButY))
+    {
+        if(useBugSound == 1)
+            useBugSound = 0;
+        else
+            useBugSound = 1;
     }
 
     updateFrame();
@@ -466,7 +511,6 @@ int main(int argc, char **argv)
                 flags |= SDL_RENDERER_ACCELERATED;
 
             SDL_Log("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
-            SDL_ShowCursor(SDL_DISABLE);
             Renderer = SDL_CreateRenderer(SdlWindow, -1, flags);
             if (Renderer)
             {
