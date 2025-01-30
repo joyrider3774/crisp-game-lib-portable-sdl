@@ -322,6 +322,19 @@ void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
 void md_drawRect(float x, float y, float w, float h, unsigned char r,
                  unsigned char g, unsigned char b)
 {
+    //adjust for different behaviour between sdl and js in case of negative width / height
+    if(w < 0.0f)
+    {
+        x += w;
+        w *= -1.0f; 
+    }
+
+    if(h < 0.0f)
+    {
+        y += h;
+        h *= -1.0f; 
+    }
+
     SDL_Rect dst = {offsetX , offsetY, viewW, viewH};
     SDL_RenderSetClipRect(Renderer, &dst);
     SDL_Rect dst2 = { (int)(offsetX + x * scale) , (int)(offsetY + y * scale), (int)ceilf(w * scale), (int)ceilf(h  * scale)};
