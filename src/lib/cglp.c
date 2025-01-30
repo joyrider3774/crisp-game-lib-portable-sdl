@@ -733,6 +733,12 @@ void setButtonState(bool left, bool right, bool up, bool down, bool b, bool a) {
   }
 }
 
+static void setMousePos(float x, float y) 
+{ 
+  currentInput.pos.x = x;
+  currentInput.pos.y = y;
+}
+
 static void updateInput() { input = currentInput; }
 
 /// \cond

@@ -86,6 +86,7 @@ typedef struct {
   bool isPressed;
   bool isJustPressed;
   bool isJustReleased;
+  Vector pos;
 } Input;
 
 typedef struct {
@@ -152,6 +153,7 @@ EXTERNC ColorRgb colorRgbs[COLOR_COUNT];
 EXTERNC void initGame();
 EXTERNC void setButtonState(bool left, bool right, bool up, bool down, bool b,
                             bool a);
+EXTERNC void setMousePos(float x, float y);
 EXTERNC void updateFrame();
 /// \endcond
 
