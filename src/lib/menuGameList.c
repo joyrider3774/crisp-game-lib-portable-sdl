@@ -73,13 +73,13 @@ void addGames() {
   addGameTwofaced();
   addGameBombup();
 
-  AddGameSection("======MOUSE======");
+  addGameSection("======MOUSE======");
   addGameBBlast();
   addGameBalance();
   addGameBreedc();
 
   //inccorect
-  AddGameSection("======BUGGED=====");
+  addGameSection("======BUGGED=====");
   addGameAccelB();
 
   addGameSection("===BUGGED MOUSE==");
