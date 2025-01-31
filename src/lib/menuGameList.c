@@ -39,7 +39,7 @@ void addGameAccelB();
 
 void addGameSection(char* sectionName)
 {
-    Options o;
+    Options o = { 0 };
     addGame(sectionName, "", NULL, 0, o, NULL);
 }
 
