@@ -94,27 +94,17 @@ Note: Some features are limited due to device resource limitations.
 
 - [cglpESPboy](https://github.com/ESPboy-edu/ESPboy_crisp-game-lib-portable/tree/main/cglpESPboy) (ported by [ESPboy](https://github.com/ESPboy-edu))
 
-### Funkey, RG Nano
+### Funkey or RG-Nano
 
-1. Create `cglpSDL1_funkey` directory on a seperate location
-
-1. Copy [./src/lib/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/lib) and [./src/games/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/games) files to the directory
-
-1.  Copy [./src/cglpSDL1_funkey](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1_funkey) directory overwriting files (or compare the differences)
-
-1. Edit paths to funkey sdk in `funkey.mk`
-
-1. (Cross)compile using provided `Makefile` by running make or package to an opk file using `Package.sh` 
-
-- ported by [Joyrider3774](https://github.com/joyrider3774)
+-  ported by [Joyrider3774](https://github.com/abagames/crisp-game-lib-portable-funkey)
 
 ### Any Device supporting SDL1 or SDL2
 
-1. Copy Makefile from [./src/cglpSDL1](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1) or [./src/cglpSDL2](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL2) to rootfolder of this repo
-
-1. (Cross)compile using provided `Makefile` by running make in rootfolder of this repo
+1. (Cross)compile using provided `Makefile` by running `make -f ./src/cglpSDL2/Makefile` or `make -f ./src/cglpSDL1/Makefile` in rootfolder of this repo
 
 1. Checkout `binary --help` for information on commandline parameters
+
+- SDL2 port supports game controllers SDL1 port only keyboard
 
 - ported by [Joyrider3774](https://github.com/joyrider3774)
 
