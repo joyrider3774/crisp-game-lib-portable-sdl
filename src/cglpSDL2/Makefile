@@ -19,7 +19,7 @@ INCS = -I$(SRC_DIR) -I$(LIB_DIR) -I$(GME_DIR)
 SDL_CONFIG = sdl2-config
 CC = gcc
 OPT_LEVEL ?= -O2 
-CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags` -Wno-write-strings
+CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags`
 LDFLAGS ?= -g
 LDLIBS ?= `$(SDL_CONFIG) --libs` -lm 
 
