@@ -8,3 +8,8 @@ src/cglpPlaydate/crisp-games.pdx/
 src/cglpPlaydate/Source/pdex.bin
 src/cglpPlaydate/Source/pdex.dll
 src/cglpPlaydate/Source/pdex.elf
+MyTempOutputFolder
+obj
+cglpsdl1.exe
+cglpsdl2.exe
+js
