@@ -110,11 +110,9 @@ Note: Some features are limited due to device resource limitations.
 
 ### Any Device supporting SDL1 or SDL2
 
-1. Copy files directory from [./src/cglpSDL1](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1) or [./src/cglpSDL2](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL2)
+1. Copy Makefile from [./src/cglpSDL1](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL1) or [./src/cglpSDL2](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/cglpSDL2) to rootfolder of this repo
 
-1. Copy [./src/lib/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/lib) and [./src/games/\*](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/games) files to the directory
-
-1. (Cross)compile using provided `Makefile` by running make 
+1. (Cross)compile using provided `Makefile` by running make in rootfolder of this repo
 
 1. Checkout `binary --help` for information on commandline parameters
 
