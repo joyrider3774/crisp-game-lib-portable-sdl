@@ -45,7 +45,7 @@ void addGameSection(char* sectionName)
 
 
 void addGames() {
-  addGameSection("==ORIGNAL GAMES==");
+  addGameSection("==DEFAULT GAMES==");
   addGamePakuPaku();
   addGameThunder();
   addGameBallTour();
