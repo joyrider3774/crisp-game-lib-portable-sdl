@@ -2,6 +2,16 @@
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL2.h"
+#ifdef USE_UINT64_TIMER
+    typedef Uint64 TimerType;
+    #define PHASE_MAX (1ULL << 32)
+    #define FREQ_SCALE 65536.0f
+#else
+    typedef Uint32 TimerType;
+    #define PHASE_MAX (1UL << 24)
+    #define FREQ_SCALE 512.0f
+#endif
+
 #include "CInput.h"
 
 #define SAMPLE_RATE 44100
@@ -44,7 +54,7 @@ typedef struct {
 typedef struct {
     Note notes[MAX_NOTES]; // List of scheduled notes
     int note_count;        // Current number of notes
-    float time;            // Current playback time in seconds
+    TimerType time;           // Current playback time (in samples)
 } AudioState;
 
 typedef struct 
@@ -82,7 +92,7 @@ static void resetCharacterSprite() {
 
 
 // Simulate buggy sinf: restricts output to 0, 1, -1 based on 90° increments
-float buggy_sinf(float angle) 
+float buggySinf(float angle) 
 {
     NORMALIZE_ANGLE(angle);  // Normalize angle to [0, 2π)
 
@@ -101,105 +111,130 @@ float buggy_sinf(float angle)
     return 0.0f;  // Default fallback
 }
 
+
+static TimerType timeToSample(float t) { return (TimerType)(t * SAMPLE_RATE); }
+static float sampleToTime(TimerType s) { return (float)s / SAMPLE_RATE; }
+
 // Sine wave oscillator function
-float generate_sine_wave(float frequency, float time) 
+static float generateSineWave(float frequency, TimerType ticks) 
 {
-    if(useBugSound == 1)
-        return buggy_sinf(2.0f * M_PI * frequency * time);
-    else
-        return sinf(2.0f * M_PI * frequency * time);
+    // Calculate fixed-point frequency representation
+    TimerType freq_fixed = (TimerType)((frequency * PHASE_MAX) / SAMPLE_RATE);
+    
+    // Calculate phase using fixed-point arithmetic
+    TimerType phase = (ticks * freq_fixed) & (PHASE_MAX - 1);
+    
+    // Convert phase to float angle
+    float phase_float = (2.0f * M_PI * phase) / PHASE_MAX;
+    
+    return useBugSound ? buggySinf(phase_float) : sinf(phase_float);
 }
 
 // Audio callback
-static void audio_callback(void *userdata, Uint8 *stream, int len) {
-    AudioState *audio_state = (AudioState *)userdata;
-    int16_t *buffer = (int16_t *)stream;
-    int sample_count = len / sizeof(int16_t);
+static void audio_callback(void *userdata, Uint8 *stream, int len)
+{
+   AudioState *audio_state = (AudioState *)userdata;
+   Sint16 *buffer = (Sint16 *)stream;
+   int sample_count = len / sizeof(Sint16);
+   // Intermediate float buffer to accumulate the summed waveforms
+   float float_buffer[sample_count];
+   memset(float_buffer, 0, sizeof(float_buffer));
+   
+   // Track active notes
+   int active_note_count = 0;
 
-    // Intermediate float buffer to accumulate the summed waveforms
-    float float_buffer[sample_count];
-    for (int i = 0; i < sample_count; i++) {
-        float_buffer[i] = 0.0f;
-    }
 
-    // Track active notes
-    int active_note_count = 0;
+   for (int i = 0; i < audio_state->note_count; i++) 
+   {
+       Note *note = &audio_state->notes[i];
+       
+       // Convert note start time to current time context
+       TimerType note_start_sample = timeToSample(note->when);
+       float current_sample_time = sampleToTime(audio_state->time);
+       
+       if (!note->active && current_sample_time >= note->when) 
+       {
+           note->active = true;
+       }
 
-    // Sum of all active notes' waveforms
-    for (int i = 0; i < audio_state->note_count; i++) {
-        Note *note = &audio_state->notes[i];
+       if (note->active) 
+       {
+           // Determine if note should be deactivated
+           if (current_sample_time > note->when + note->duration + FADE_OUT_TIME) 
+           {
+               note->active = false; // Mark note as inactive after fade-out
+               continue; // Skip to the next note
+           }
+           
+           // Sum of all active notes' waveforms
+           for (int j = 0; j < sample_count; j++) 
+           {
+               TimerType current_sample = audio_state->time + j;
+               float sample_time = sampleToTime(current_sample);
+               float amplitude = audioVolume;
 
-        if (!note->active && audio_state->time >= note->when) {
-            note->active = true; // Activate the note when the time comes
-        }
+               float note_end_time = note->when + note->duration;
 
-        if (note->active) {
-            float note_end = note->when + note->duration;
-            if (audio_state->time > note_end + FADE_OUT_TIME) {
-                note->active = false; // Mark note as inactive after fade-out
-                continue; // Skip to the next note
-            }
+               // Fade out ending notes
+               if (sample_time > note_end_time) 
+               {
+                   float fade_progress = (sample_time - note_end_time) / FADE_OUT_TIME;
+                   amplitude *= (1.0f - fade_progress);
+                   if (amplitude < 0.0f) 
+                       amplitude = 0.0f;
+               }
+				
+			   // Add this note's waveform to the float buffer
+               // Use sample time for wave generation
+               float_buffer[j] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
+           }
+       }
 
-            // Generate audio for active notes
-            for (int j = 0; j < sample_count; j++) 
-            {
-                int numtones = 0;
-                float t = audio_state->time + (float)j / SAMPLE_RATE;
-                if (t >= note->when) {
-                    float amplitude = audioVolume; // Apply global volume
-                    numtones++;
-                    // Apply fade-out if the note is in its fade-out period
-                    if (t > note_end) {
-                        float fade_time = t - note_end;
-                        amplitude *= (1.0f - (fade_time / FADE_OUT_TIME));
-                        if (amplitude < 0.0f) amplitude = 0.0f; // Ensure no negative values
-                    }
-
-                    // Add this note's waveform to the float buffer
-                    float_buffer[j] += generate_sine_wave(note->frequency, t) * AMPLITUDE * amplitude;
-                }
-                float_buffer[j]  = float_buffer[j]  / numtones;
-                
-            }
-        }
-
-        // Always add notes that are either active or scheduled for the future
-        if (note->active || (note->when > audio_state->time)) {
-            audio_state->notes[active_note_count++] = *note;
-        }
-    }
+       // Always add notes that are either active or scheduled for the future
+       if (note->active || (note_start_sample > audio_state->time)) 
+       {
+           audio_state->notes[active_note_count++] = *note;
+       }
+   }
 
     // Update the note count to reflect only active notes
     audio_state->note_count = active_note_count;
 
-    // Find the maximum amplitude in the float buffer and normalize
-    float max_amplitude = 0.0f;
-    for (int i = 0; i < sample_count; i++) {
-        if (float_buffer[i] > max_amplitude) max_amplitude = float_buffer[i];
-        if (float_buffer[i] < -max_amplitude) max_amplitude = -float_buffer[i];
-    }
+   // Find the maximum amplitude in the float buffer and normalize
+   float max_amplitude = 0.0f;
+   for (int i = 0; i < sample_count; i++) 
+   {
+       if (float_buffer[i] > max_amplitude) 
+           max_amplitude = float_buffer[i];
+       if (float_buffer[i] < -max_amplitude) 
+           max_amplitude = -float_buffer[i];
+   }
 
-    // If the maximum amplitude exceeds the allowed range, scale it down
-    if (max_amplitude > 32767.0f) {
-        float scale_factor = 32767.0f / max_amplitude;
-        for (int i = 0; i < sample_count; i++) {
-            // Normalize and directly convert to int16_t
-            buffer[i] = (int16_t)(float_buffer[i] * scale_factor);
-        }
-    } else {
-        // If there's no clipping, just convert to int16_t directly
-        for (int i = 0; i < sample_count; i++) {
-            buffer[i] = (int16_t)float_buffer[i];
-        }
-    }
+   // If the maximum amplitude exceeds the allowed range, scale it down
+   if (max_amplitude > 32767.0f) 
+   {
+       float scale_factor = 32767.0f / max_amplitude;
+       for (int i = 0; i < sample_count; i++) 
+       {
+	       // Normalize and directly convert to Sint16
+           buffer[i] = (Sint16)(float_buffer[i] * scale_factor);
+       }
+   } 
+   else 
+   {
+       // If there's no clipping, just convert to Sint16 directly
+       for (int i = 0; i < sample_count; i++) 
+       {
+           buffer[i] = (Sint16)float_buffer[i];
+       }
+   }
 
-    // Update the current playback time
-    audio_state->time += (float)sample_count / SAMPLE_RATE;
+   audio_state->time += sample_count;
 }
 
 void schedule_note(AudioState *audio_state, float frequency, float when, float duration) 
 {
-    if (audio_state->note_count >= MAX_NOTES) 
+    if (audio_state->note_count >= MAX_NOTES)
     {
         return;
     }
@@ -259,7 +294,7 @@ int InitAudio()
 
 float md_getAudioTime() 
 {   
-    return audio_state.time ;
+    return sampleToTime(audio_state.time) ;
 }
 
 void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
