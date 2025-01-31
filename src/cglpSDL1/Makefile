@@ -1,16 +1,32 @@
-SRC_DIR = src 
-OBJ_DIR = ./obj
+SRC_DIR = ./src/cglpSDL1
+LIB_DIR = ./src/lib
+GME_DIR = ./src/games
+
+OBJ_DIR = obj
 EXE=cglpsdl1
 
 SRC=$(wildcard *.c $(foreach fd, $(SRC_DIR), $(fd)/*.c)) 
 OBJS=$(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))
 
-SDL_CONFIG=sdl-config
+LIB_DIR_SRC=$(wildcard *.c $(foreach fd, $(LIB_DIR), $(fd)/*.c)) 
+OBJS+=$(addprefix $(OBJ_DIR)/, $(LIB_DIR_SRC:.c=.o))
+
+GME_DIR_SRC=$(wildcard *.c $(foreach fd, $(GME_DIR), $(fd)/*.c)) 
+OBJS+=$(addprefix $(OBJ_DIR)/, $(GME_DIR_SRC:.c=.o))
+
+
+INCS = -I$(SRC_DIR) -I$(LIB_DIR) -I$(GME_DIR)
+SDL_CONFIG = sdl-config
 CC = gcc
 OPT_LEVEL ?= -O2 
 CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags` -Wno-write-strings
 LDFLAGS ?= -g
-LDLIBS ?=  `$(SDL_CONFIG) --libs` -lm
+LDLIBS ?= `$(SDL_CONFIG) --libs` -lm 
+
+
+ifeq ($(OS),Windows_NT)
+LDLIBS += -mconsole
+endif
 
 #MINGW does not have X11 and does not require it
 #dont know about cygwin
@@ -29,7 +45,7 @@ $(EXE): $(OBJS)
 
 $(OBJ_DIR)/%.o: %.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(INCS) -c -o $@ $<
 
 $(OBJ_DIR):
 	mkdir -p $@
