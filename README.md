@@ -1,6 +1,22 @@
-# crisp-game-lib-portable
+# SDL Version of crisp-game-lib-portable
+This is a repo containing sdl ports of the crisp games library which is a Minimal C-lang library for creating classic arcade-like mini-games running on devices and browsers. 
+Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
 
-Minimal C-lang library for creating classic arcade-like mini-games running on devices and browsers. Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
+see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL1) for SDL 1 Port
+- Keyboard only
+- Sound support
+- Extra added games
+- Sections inside the menu's
+- Ability to have more than 16 games in the menu
+- Funkey version is based on this version
+  
+see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL2) for SDL 1 Port
+- keyboard, mouse and gamepads support using Gamecontroller Api
+- Sound support
+- Extra added games
+- Sections inside the menu's
+- Ability to have more than 16 games in the menu
+- Works on many chinese emulation handhelds if you crosscompile (rg35xx sp, rg35xx plus, trimui smart pro, rgb30, ..)
 
 ## Target devices
 
@@ -96,7 +112,7 @@ Note: Some features are limited due to device resource limitations.
 
 ### Funkey or RG-Nano
 
--  ported by [Joyrider3774](https://github.com/abagames/crisp-game-lib-portable-funkey)
+- [cglpFunkey](https://github.com/joyrider3774/crisp-game-lib-portable-funkey) (ported by [Joyrider3774](https://github.com/joyrider3774))
 
 ### Any Device supporting SDL1 or SDL2
 
@@ -124,6 +140,7 @@ Note: Some features are limited due to device resource limitations.
 - Press the SELECT button (PyBadge)
 - Press A, B, Up and Right buttons simultaneously (Playdate)
 - Press the X key while holding down the up and down arrow keys (Browser)
+- Press ESC on SDL Ports
 
 ### Toggle sound on/off
 
@@ -131,6 +148,10 @@ Note: Some features are limited due to device resource limitations.
 - Press the C Button (M5Stack)
 - Press the START button (PyBadge)
 - Press the Z key while holding down the up and down arrow keys (Browser)
+
+### Key assignment on SDL Ports
+
+- (A) X key, (B) C key, (left/right/up/down) arrow keys
 
 ### Key assignment on browser
 
