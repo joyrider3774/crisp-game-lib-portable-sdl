@@ -28,6 +28,8 @@ void addGameTwofaced();
 void addGameBombup();
 void addGameBwalls();
 void addGameCatapult();
+//void addGameCateP();
+void addGameChargeBeam();
 
 //working requires mouse 
 void addGameBBlast();
@@ -78,6 +80,8 @@ void addGames() {
   addGameBombup();
   addGameBwalls();
   addGameCatapult();
+  //addGameCateP();
+  addGameChargeBeam();
 
   addGameSection("======MOUSE======");
   addGameBBlast();
