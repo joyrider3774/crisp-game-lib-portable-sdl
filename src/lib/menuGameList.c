@@ -26,6 +26,7 @@ void addGameBallsBombs();
 void addGameAntLion();
 void addGameTwofaced();
 void addGameBombup();
+void addGameBwalls();
 
 //working requires mouse 
 void addGameBBlast();
@@ -34,6 +35,7 @@ void addGameBreedc();
 
 //working inccorectly
 void addGameAccelB();
+void addGameBsfish();
 
 //working inccorectly requires mouse 
 
@@ -72,6 +74,7 @@ void addGames() {
   addGameAntLion();
   addGameTwofaced();
   addGameBombup();
+  addGameBwalls();
 
   addGameSection("======MOUSE======");
   addGameBBlast();
@@ -81,6 +84,7 @@ void addGames() {
   //inccorect
   addGameSection("======BUGGED=====");
   addGameAccelB();
+  addGameBsfish();
 
   addGameSection("===BUGGED MOUSE==");
 
