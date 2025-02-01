@@ -27,6 +27,7 @@ void addGameAntLion();
 void addGameTwofaced();
 void addGameBombup();
 void addGameBwalls();
+void addGameCatapult();
 
 //working requires mouse 
 void addGameBBlast();
@@ -76,6 +77,7 @@ void addGames() {
   addGameTwofaced();
   addGameBombup();
   addGameBwalls();
+  addGameCatapult();
 
   addGameSection("======MOUSE======");
   addGameBBlast();
