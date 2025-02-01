@@ -32,6 +32,7 @@ void addGameBwalls();
 void addGameBBlast();
 void addGameBalance();
 void addGameBreedc();
+void addGameCardq();
 
 //working inccorectly
 void addGameAccelB();
@@ -80,6 +81,7 @@ void addGames() {
   addGameBBlast();
   addGameBalance();
   addGameBreedc();
+  addGameCardq();
 
   //inccorect
   addGameSection("======BUGGED=====");
