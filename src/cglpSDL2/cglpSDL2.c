@@ -23,7 +23,7 @@
 #define AMPLITUDE 10000
 #define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
 
-#define DEFAULT_GLOW_SIZE 5
+#define DEFAULT_GLOW_SIZE 6 * DEFAULT_WINDOW_WIDTH / 240
 #define DEFAULT_GLOW_INTENSITY 96
 #define DEFAULT_OVERLAY 0
 #define DEFAULT_GLOW_ENABLED false
@@ -59,6 +59,8 @@ static int overlay = DEFAULT_OVERLAY;
 static int glowSize = DEFAULT_GLOW_SIZE;
 static float wscale = 1.0f;
 static bool glowEnabled = DEFAULT_GLOW_ENABLED;
+static SDL_Surface *view = NULL;
+static SDL_Texture *viewTexture = NULL;
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -68,149 +70,39 @@ typedef struct {
 } Note;
 
 typedef struct {
-    Note notes[MAX_NOTES]; // List of scheduled notes
-    int note_count;        // Current number of notes
+    Note notes[MAX_NOTES];    // List of scheduled notes
+    int note_count;           // Current number of notes
     TimerType time;           // Current playback time (in samples)
 } AudioState;
 
-// Pre-calculated distance lookup table
+typedef struct 
+{
+    SDL_Surface *sprite;
+    int hash;
+} CharaterSprite;
+
 typedef struct {
     Uint8* distances;  // Lookup table for distances
     int size;         // Size of the table (glowSize * 2 + 1)
 } GlowDistanceTable;
 
-// Extended sprite structure to handle multiple scales
-typedef struct {
-    SDL_Texture *sprite;
-    float scaleKey;      // The scale this sprite was created for
-    int hash;
-    int w;
-    int h;
-} ScaledSprite;
-
-typedef struct {
-    ScaledSprite* sprites;  // Array of sprites at different scales
-    int spriteCount;        // Number of sprites for this character
-    int maxSprites;         // Maximum sprites allowed per character
-} CharacterSprite;
-
-#ifdef DEBUG_MONITORING
-typedef struct {
-    Uint64 totalDrawCalls;
-    Uint64 cacheHits;
-    Uint64 cacheMisses;
-    Uint64 totalRenderTime;
-    Uint64 totalGlowTime;
-    size_t peakMemoryUsage;
-    int activeScaledSprites;
-    float currentScale;
-    int currentGlowSize;
-} CharacterRenderStats;
-static CharacterRenderStats renderStats = {0};
-static SDL_atomic_t atomicMemoryUsage = {0};
-
-static void formatSize(size_t bytes, char* buffer, size_t bufferSize) {
-    if (bytes < 1024) {
-        SDL_snprintf(buffer, bufferSize, "%llu B", (unsigned long long)bytes);
-    } else if (bytes < 1024 * 1024) {
-        SDL_snprintf(buffer, bufferSize, "%.2f KB", bytes / 1024.0f);
-    } else {
-        SDL_snprintf(buffer, bufferSize, "%.2f MB", bytes / (1024.0f * 1024.0f));
-    }
-}
-
-static void updateMemoryUsage(size_t delta, bool increase) {
-    int64_t currentValue;
-    if (increase) {
-        currentValue = SDL_AtomicAdd(&atomicMemoryUsage, delta);
-        size_t newUsage = (size_t)currentValue;
-        if (newUsage > renderStats.peakMemoryUsage) {
-            renderStats.peakMemoryUsage = newUsage;
-            char sizeStr[32];
-            formatSize(renderStats.peakMemoryUsage, sizeStr, sizeof(sizeStr));
-            //SDL_Log("New peak memory usage: %s", sizeStr);
-        }
-    } else {
-        SDL_AtomicAdd(&atomicMemoryUsage, -(int64_t)delta);
-    }
-}
-#endif
-
-// Memory tracking functions with additional logging
-static void* trackedMalloc(size_t size) {
-    void* ptr = SDL_malloc(size);
-    if (ptr) {
-#ifdef DEBUG_MONITORING
-        updateMemoryUsage(size, true);
-        char sizeStr[32];
-        formatSize(size, sizeStr, sizeof(sizeStr));
-        //SDL_Log("Memory allocated: %s at %p", sizeStr, ptr);
-#endif
-    }
-    return ptr;
-}
-
-static void trackedFree(void* ptr, size_t size) {
-    if (ptr) {
-#ifdef DEBUG_MONITORING
-        updateMemoryUsage(size, false);
-        char sizeStr[32];
-        formatSize(size, sizeStr, sizeof(sizeStr));
-        //SDL_Log("Memory freed: %s at %p", sizeStr, ptr);
-#endif
-        SDL_free(ptr);
-    }
-}
-
-#ifdef DEBUG_MONITORING
-
-static void logRenderStats() {
-    static Uint64 lastLogTime = 0;
-    Uint64 currentTime = SDL_GetTicks64();
-    
-    // Log every 5 seconds
-    if (currentTime - lastLogTime > 5000) {
-        float hitRate = renderStats.totalDrawCalls > 0 ? 
-            (float)renderStats.cacheHits / renderStats.totalDrawCalls * 100.0f : 0.0f;
-        float avgRenderTime = renderStats.totalDrawCalls > 0 ? 
-            (float)renderStats.totalRenderTime / renderStats.totalDrawCalls : 0.0f;
-        
-        int64_t currentMemory = SDL_AtomicGet(&atomicMemoryUsage);
-        char currentSizeStr[32], peakSizeStr[32];
-        formatSize((size_t)currentMemory, currentSizeStr, sizeof(currentSizeStr));
-        formatSize(renderStats.peakMemoryUsage, peakSizeStr, sizeof(peakSizeStr));
-        
-        SDL_Log("\n=== Character Render Statistics ===\n");
-        SDL_Log("Cache Hit Rate: %.2f%% (%llu hits, %llu misses)",
-                hitRate, renderStats.cacheHits, renderStats.cacheMisses);
-        SDL_Log("Average Render Time: %.3f ms", avgRenderTime);
-        SDL_Log("Active Scaled Sprites: %d", renderStats.activeScaledSprites);
-        SDL_Log("Current Scale: %.2f", renderStats.currentScale);
-        SDL_Log("Current Glow Size: %d", renderStats.currentGlowSize);
-        SDL_Log("Current Memory Usage: %s", currentSizeStr);
-        SDL_Log("Peak Memory Usage: %s\n", peakSizeStr);
-        
-        lastLogTime = currentTime;
-    }
-}
-#endif
+static GlowDistanceTable* distanceTable = NULL;
 
 AudioState audio_state = {0};
 
-static CharacterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
+static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
-static GlowDistanceTable* distanceTable = NULL;
 
 static GlowDistanceTable* createDistanceTable(int glowSize) {
-    GlowDistanceTable* table = (GlowDistanceTable*)trackedMalloc(sizeof(GlowDistanceTable));
+    GlowDistanceTable* table = (GlowDistanceTable*)SDL_malloc(sizeof(GlowDistanceTable));
     if (!table) return NULL;
 
     int size = glowSize * 2 + 1;
     table->size = size;
-    table->distances = (Uint8*)trackedMalloc(size * size);
+    table->distances = (Uint8*)SDL_malloc(size * size);
     
     if (!table->distances) {
-        trackedFree(table, sizeof(GlowDistanceTable));
+        SDL_free(table);
         return NULL;
     }
 
@@ -234,185 +126,24 @@ static GlowDistanceTable* createDistanceTable(int glowSize) {
     return table;
 }
 
-static SDL_Surface* createCharacterSurface(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
-                                         float scale, int glowRadius, Uint8 glowAlpha,
-                                         bool withGlow) {
-#ifdef DEBUG_MONITORING
-    Uint64 startTime = SDL_GetPerformanceCounter();
-#endif
-    // Update distance table if needed
-    if (withGlow && (!distanceTable || distanceTable->size != (glowRadius * 2 + 1))) {
-        if (distanceTable) {
-            SDL_free(distanceTable->distances);
-            SDL_free(distanceTable);
-        }
-        distanceTable = createDistanceTable(glowRadius);
-    }
-
-    int baseWidth = (int)ceilf((float)CHARACTER_WIDTH * scale);
-    int baseHeight = (int)ceilf((float)CHARACTER_HEIGHT * scale);
-    int fullWidth = withGlow ? baseWidth + (glowRadius * 2) : baseWidth;
-    int fullHeight = withGlow ? baseHeight + (glowRadius * 2) : baseHeight;
-
-    SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, 
-        fullWidth, fullHeight, 32, SDL_PIXELFORMAT_RGBA8888);
-
-    if (!surface) return NULL;
-
-    // Clear surface
-    SDL_memset(surface->pixels, 0, surface->h * surface->pitch);
-    
-    int offset = withGlow ? glowRadius : 0;
-
-    // Draw base character using direct memory access for better performance
-    SDL_LockSurface(surface);
-    Uint32* pixels = (Uint32*)surface->pixels;
-    
-    for (int yy = 0; yy < CHARACTER_HEIGHT; yy++) {
-        int scaledY = (int)((float)yy * scale) + offset;
-        for (int xx = 0; xx < CHARACTER_WIDTH; xx++) {
-            unsigned char r = grid[yy][xx][0];
-            unsigned char g = grid[yy][xx][1];
-            unsigned char b = grid[yy][xx][2];
-            
-            if ((r == 0) && (g == 0) && (b == 0)) continue;
-            
-            int scaledX = (int)((float)xx * scale) + offset;
-            int scaleSize = (int)ceilf(scale);
-            
-            // Optimized pixel filling for the character
-            Uint32 color = SDL_MapRGBA(surface->format, r, g, b, 255);
-            for (int sy = 0; sy < scaleSize; sy++) {
-                for (int sx = 0; sx < scaleSize; sx++) {
-                    int px = scaledX + sx;
-                    int py = scaledY + sy;
-                    if (px >= 0 && px < fullWidth && py >= 0 && py < fullHeight) {
-                        pixels[py * surface->w + px] = color;
-                    }
-                }
-            }
-        }
-    }
-
-    if (withGlow && distanceTable) {
-#ifdef DEBUG_MONITORING
-        Uint64 glowStartTime = SDL_GetPerformanceCounter();
-#endif
-        Uint32* tempPixels = (Uint32*)trackedMalloc(surface->h * surface->pitch);
-        if (tempPixels) {
-            SDL_memcpy(tempPixels, pixels, surface->h * surface->pitch);
-
-            // Apply glow using the distance lookup table
-            int tableSize = distanceTable->size;
-            int halfTable = tableSize / 2;
-
-            for (int y = 0; y < baseHeight; y++) {
-                for (int x = 0; x < baseWidth; x++) {
-                    int srcIdx = (y + offset) * surface->w + (x + offset);
-                    Uint32 pixel = tempPixels[srcIdx];
-                    Uint8 r, g, b, a;
-                    SDL_GetRGBA(pixel, surface->format, &r, &g, &b, &a);
-
-                    if (a == 0) continue;
-
-                    // Apply glow using pre-calculated distances
-                    for (int gy = 0; gy < tableSize; gy++) {
-                        int destY = y + gy - halfTable + offset;
-                        if (destY < 0 || destY >= fullHeight) continue;
-
-                        for (int gx = 0; gx < tableSize; gx++) {
-                            int destX = x + gx - halfTable + offset;
-                            if (destX < 0 || destX >= fullWidth) continue;
-
-                            Uint8 distance = distanceTable->distances[gy * tableSize + gx];
-                            if (distance > 0) {
-                                Uint8 glowA = (distance * glowAlpha) >> 8;
-                                int destIdx = destY * surface->w + destX;
-                                
-                                Uint32 destPixel = pixels[destIdx];
-                                Uint8 existingR, existingG, existingB, existingA;
-                                SDL_GetRGBA(destPixel, surface->format, 
-                                          &existingR, &existingG, &existingB, &existingA);
-
-                                if (glowA > existingA) {
-                                    pixels[destIdx] = SDL_MapRGBA(surface->format, r, g, b, glowA);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            trackedFree(tempPixels, surface->h * surface->pitch);
-        }
-#ifdef DEBUG_MONITORING
-        Uint64 glowEndTime = SDL_GetPerformanceCounter();
-        renderStats.totalGlowTime += (glowEndTime - glowStartTime) * 1000 / SDL_GetPerformanceFrequency();
-#endif
-    }
-
-    SDL_UnlockSurface(surface);
-#ifdef DEBUG_MONITORING
-    Uint64 endTime = SDL_GetPerformanceCounter();
-    renderStats.totalRenderTime += (endTime - startTime) * 1000 / SDL_GetPerformanceFrequency();
-#endif
-    return surface;
-}
-
-// Add cleanup for monitoring
-void cleanupMonitoring() {
-#ifdef DEBUG_MONITORING
-    char peakSizeStr[32];
-    formatSize(renderStats.peakMemoryUsage, peakSizeStr, sizeof(peakSizeStr));
-    
-    SDL_Log("\n=== Final Render Statistics ===\n");
-    SDL_Log("Total Draw Calls: %llu", renderStats.totalDrawCalls);
-    SDL_Log("Final Cache Hit Rate: %.2f%%", 
-            (float)renderStats.cacheHits / renderStats.totalDrawCalls * 100.0f);
-    SDL_Log("Peak Memory Usage: %s", peakSizeStr);
-    SDL_Log("Average Render Time: %.3f ms\n", 
-            (float)renderStats.totalRenderTime / renderStats.totalDrawCalls);
-#endif
-}
-
-// Add initialization for monitoring
-static void initMonitoring() {
-#ifdef DEBUG_MONITORING
-    SDL_AtomicSet(&atomicMemoryUsage, 0);
-    renderStats = (CharacterRenderStats){0};
-    SDL_Log("Monitoring initialized");
-#endif
-}
-
 static void initCharacterSprite() {
     for (int i = 0; i < MAX_CACHED_CHARACTER_PATTERN_COUNT; i++) {
-        characterSprites[i].sprites = NULL;
-        characterSprites[i].spriteCount = 0;
-        characterSprites[i].maxSprites = 3;  // Cache up to 3 scales per character
+        characterSprites[i].sprite = NULL;
     }
     characterSpritesCount = 0;
-    distanceTable = NULL;
+    distanceTable = NULL;  // Initialize distance table pointer
 }
 
 static void resetCharacterSprite() {
     for (int i = 0; i < characterSpritesCount; i++) {
-        for (int j = 0; j < characterSprites[i].spriteCount; j++) {
-            if (characterSprites[i].sprites[j].sprite) {
-                SDL_DestroyTexture(characterSprites[i].sprites[j].sprite);
-            }
-        }
-        if (characterSprites[i].sprites) {
-            trackedFree(characterSprites[i].sprites, 
-                sizeof(ScaledSprite) * characterSprites[i].maxSprites);
-            characterSprites[i].sprites = NULL;
-        }
+        SDL_FreeSurface(characterSprites[i].sprite);
+        characterSprites[i].sprite = NULL;
     }
     characterSpritesCount = 0;
+    
     if (distanceTable) {
-        if (distanceTable->distances) {
-            trackedFree(distanceTable->distances, 
-                distanceTable->size * distanceTable->size);
-        }
-        trackedFree(distanceTable, sizeof(GlowDistanceTable));
+        SDL_free(distanceTable->distances);
+        SDL_free(distanceTable);
         distanceTable = NULL;
     }
 }
@@ -422,16 +153,16 @@ float buggySinf(float angle)
 {
     NORMALIZE_ANGLE(angle);  // Normalize angle to [0, 2π)
 
-    // Map angle to nearest 90° (π/2 radians)
+    // Map angle to nearest 90 (p/2 radians)
     if (angle < M_PI_4 || angle >= (2 * M_PI - M_PI_4)) 
     {
-        return 0.0f;  // Closest to 0° or 360°
+        return 0.0f;  // Closest to 0 or 360
     } else if (angle < (M_PI_2 + M_PI_4)) {
-        return 1.0f;  // Closest to 90°
+        return 1.0f;  // Closest to 90
     } else if (angle < (M_PI + M_PI_4)) {
-        return 0.0f;  // Closest to 180°
+        return 0.0f;  // Closest to 180
     } else if (angle < (3 * M_PI_2 + M_PI_4)) {
-        return -1.0f; // Closest to 270°
+        return -1.0f; // Closest to 270
     }
 
     return 0.0f;  // Default fallback
@@ -572,7 +303,6 @@ void schedule_note(AudioState *audio_state, float frequency, float when, float d
     note->active = false;
 }
 
-
 void md_playTone(float freq, float duration, float when) 
 {
     if(soundOn != 1)
@@ -619,214 +349,316 @@ int InitAudio()
 
 
 float md_getAudioTime() 
-{   
-    return sampleToTime(audio_state.time) ;
+{ 
+    return sampleToTime(audio_state.time);
 }
 
-
-void applyGlowToRect(SDL_Renderer* renderer, SDL_Rect rect, int glowRadius, Uint8 glowAlpha, Uint8 r, Uint8 g, Uint8 b) {
-    // Validate inputs
-    if (!renderer || glowRadius <= 0 || glowAlpha == 0) {
+void applyGlowToRect(SDL_Surface* surface, SDL_Rect rect, int glowRadius, Uint8 glowAlpha,
+                     Uint8 r, Uint8 g, Uint8 b) {
+    if (!surface || glowRadius <= 0 || glowAlpha == 0) {
         return;
     }
 
-    SDL_Rect prevClipRect;
-    SDL_RenderGetClipRect(Renderer, & prevClipRect);
-    // Store the original draw color and blend mode
-    Uint8 originalR, originalG, originalB, originalA;
-    SDL_GetRenderDrawColor(renderer, &originalR, &originalG, &originalB, &originalA);
-    SDL_BlendMode originalBlendMode;
-    SDL_GetRenderDrawBlendMode(renderer, &originalBlendMode);
+    SDL_Surface* tempSurface = SDL_CreateRGBSurface(surface->flags,
+        rect.w + (glowRadius * 2), rect.h + (glowRadius * 2),
+        32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
 
-    // Enable alpha blending
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    if (!tempSurface) return;
 
-    // Draw only the outer borders, no interior filling
-    for (int layer = 1; layer <= glowRadius; layer++) {
-        // Calculate alpha with a non-linear fade (quadratic falloff)
+    // Clear temp surface
+    SDL_FillRect(tempSurface, NULL, SDL_MapRGBA(tempSurface->format, 0, 0, 0, 0));
+
+    SDL_LockSurface(tempSurface);
+    Uint32* pixels = (Uint32*)tempSurface->pixels;
+    
+    // For each glow layer
+    for (int layer = glowRadius; layer > 0; layer--) {
+        // Calculate alpha with quadratic falloff
         float alphaFactor = 1.0f - powf((float)layer / glowRadius, 2.0f);
         Uint8 currentAlpha = (Uint8)(alphaFactor * glowAlpha);
+        
+        if (currentAlpha <= 0) continue;
 
-        // Skip if alpha is too low to be visible
-        if (currentAlpha <= 0) {
-            continue;
-        }
-
-        SDL_SetRenderDrawColor(renderer, r, g, b, currentAlpha);
-
-         // Set clip rectangle to control drawing
-        SDL_Rect outerClipRect = {
-            rect.x - layer, 
-            rect.y - layer, 
-            rect.w + (layer * 2), 
-            rect.h + (layer * 2)
-        };
-        SDL_RenderSetClipRect(Renderer, &outerClipRect);
-
-        // Top outer border
+        // Draw top outer border
         SDL_Rect topRect = {
-            rect.x - layer, 
-            rect.y - layer, 
-            rect.w + (layer * 2), 
+            glowRadius - layer,
+            glowRadius - layer,
+            rect.w + (layer * 2),
             1
         };
-        SDL_RenderFillRect(Renderer, &topRect);
+
+        // Draw glow borders in the temp surface
+        for (int y = topRect.y; y < topRect.y + 1; y++) {
+            for (int x = topRect.x; x < topRect.x + topRect.w; x++) {
+                if (x >= 0 && x < tempSurface->w && y >= 0 && y < tempSurface->h) {
+                    pixels[y * tempSurface->w + x] = SDL_MapRGBA(tempSurface->format, r, g, b, currentAlpha);
+                }
+            }
+        }
 
         // Bottom outer border
         SDL_Rect bottomRect = {
-            rect.x - layer, 
-            rect.y + rect.h + layer - 1, 
-            rect.w + (layer * 2), 
+            glowRadius - layer,
+            glowRadius + rect.h + layer - 1,
+            rect.w + (layer * 2),
             1
         };
-        SDL_RenderFillRect(Renderer, &bottomRect);
+
+        for (int y = bottomRect.y; y < bottomRect.y + 1; y++) {
+            for (int x = bottomRect.x; x < bottomRect.x + bottomRect.w; x++) {
+                if (x >= 0 && x < tempSurface->w && y >= 0 && y < tempSurface->h) {
+                    pixels[y * tempSurface->w + x] = SDL_MapRGBA(tempSurface->format, r, g, b, currentAlpha);
+                }
+            }
+        }
 
         // Left outer border
         SDL_Rect leftRect = {
-            rect.x - layer, 
-            rect.y - layer, 
-            1, 
+            glowRadius - layer,
+            glowRadius - layer,
+            1,
             rect.h + (layer * 2)
         };
-        SDL_RenderFillRect(Renderer, &leftRect);
+
+        for (int y = leftRect.y; y < leftRect.y + leftRect.h; y++) {
+            for (int x = leftRect.x; x < leftRect.x + 1; x++) {
+                if (x >= 0 && x < tempSurface->w && y >= 0 && y < tempSurface->h) {
+                    pixels[y * tempSurface->w + x] = SDL_MapRGBA(tempSurface->format, r, g, b, currentAlpha);
+                }
+            }
+        }
 
         // Right outer border
         SDL_Rect rightRect = {
-            rect.x + rect.w + layer - 1, 
-            rect.y - layer, 
-            1, 
+            glowRadius + rect.w + layer - 1,
+            glowRadius - layer,
+            1,
             rect.h + (layer * 2)
         };
-        SDL_RenderFillRect(Renderer,  &rightRect);
+
+        for (int y = rightRect.y; y < rightRect.y + rightRect.h; y++) {
+            for (int x = rightRect.x; x < rightRect.x + 1; x++) {
+                if (x >= 0 && x < tempSurface->w && y >= 0 && y < tempSurface->h) {
+                    pixels[y * tempSurface->w + x] = SDL_MapRGBA(tempSurface->format, r, g, b, currentAlpha);
+                }
+            }
+        }
+    }
+    
+    SDL_UnlockSurface(tempSurface);
+
+    // Blit the temp surface to the target surface
+    SDL_Rect dstRect = {
+        rect.x - glowRadius,
+        rect.y - glowRadius,
+        tempSurface->w,
+        tempSurface->h
+    };
+    SDL_BlitSurface(tempSurface, NULL, surface, &dstRect);
+    SDL_FreeSurface(tempSurface);
+}
+
+
+// Update glow application to use distance table
+void applyGlowToCharacterPixel(SDL_Surface* surface, int centerX, int centerY, 
+                              Uint8 r, Uint8 g, Uint8 b, 
+                              int glowRadius, Uint8 glowAlpha) {
+    if (!surface || glowRadius <= 0) return;
+
+    // Update distance table if needed
+    if (!distanceTable || distanceTable->size != (glowRadius * 2 + 1)) {
+        if (distanceTable) {
+            SDL_free(distanceTable->distances);
+            SDL_free(distanceTable);
+        }
+        distanceTable = createDistanceTable(glowRadius);
+        if (!distanceTable) return;
     }
 
-    // Restore the original draw color and blend mode
-    SDL_SetRenderDrawColor(renderer, originalR, originalG, originalB, originalA);
-    SDL_SetRenderDrawBlendMode(renderer, originalBlendMode);
+    SDL_LockSurface(surface);
+    Uint32* pixels = (Uint32*)surface->pixels;
+    
+    int tableSize = distanceTable->size;
+    int halfTable = tableSize / 2;
 
-    SDL_RenderSetClipRect(Renderer, &prevClipRect);
+    // For each pixel in the glow area
+    for (int dy = -glowRadius; dy <= glowRadius; dy++) {
+        int y = centerY + dy;
+        if (y < 0 || y >= surface->h) continue;
+
+        for (int dx = -glowRadius; dx <= glowRadius; dx++) {
+            int x = centerX + dx;
+            if (x < 0 || x >= surface->w) continue;
+
+            // Skip the center pixel
+            if (dx == 0 && dy == 0) continue;
+
+            // Get pre-calculated distance value
+            int tableX = dx + halfTable;
+            int tableY = dy + halfTable;
+            Uint8 distance = distanceTable->distances[tableY * tableSize + tableX];
+
+            if (distance > 0) {
+                Uint8 layerAlpha = (distance * glowAlpha) >> 8;
+                int idx = y * surface->w + x;
+                
+                Uint32 existing = pixels[idx];
+                Uint8 er, eg, eb, ea;
+                SDL_GetRGBA(existing, surface->format, &er, &eg, &eb, &ea);
+
+                // Only update if new alpha is higher
+                if (layerAlpha > ea) {
+                    pixels[idx] = SDL_MapRGBA(surface->format, r, g, b, layerAlpha);
+                }
+            }
+        }
+    }
+
+    SDL_UnlockSurface(surface);
+}
+SDL_Surface* createCharacterSurface(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
+                                  float scale, int glowRadius, Uint8 glowAlpha,
+                                  bool withGlow) {
+    int baseWidth = (int)ceilf((float)CHARACTER_WIDTH * scale);
+    int baseHeight = (int)ceilf((float)CHARACTER_HEIGHT * scale);
+    int fullWidth = withGlow ? baseWidth + (glowRadius * 2) : baseWidth;
+    int fullHeight = withGlow ? baseHeight + (glowRadius * 2) : baseHeight;
+    
+    SDL_Surface* surface = SDL_CreateRGBSurface(SDL_SWSURFACE, fullWidth, fullHeight,
+        32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    
+    if (!surface) return NULL;
+
+    // Clear surface
+    SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 0, 0, 0, 0));
+    
+    int offset = withGlow ? glowRadius : 0;
+
+    // First pass: Apply glow for each non-empty character pixel
+    if (withGlow) {
+        for (int yy = 0; yy < CHARACTER_HEIGHT; yy++) {
+            for (int xx = 0; xx < CHARACTER_WIDTH; xx++) {
+                unsigned char r = grid[yy][xx][0];
+                unsigned char g = grid[yy][xx][1];
+                unsigned char b = grid[yy][xx][2];
+                
+                if ((r == 0) && (g == 0) && (b == 0)) continue;
+
+                // Calculate center position for this character pixel
+                int centerX = (int)((float)xx * scale) + offset + (int)(scale / 2);
+                int centerY = (int)((float)yy * scale) + offset + (int)(scale / 2);
+
+                // Apply glow around this pixel
+                applyGlowToCharacterPixel(surface, centerX, centerY, r, g, b, 
+                                        glowRadius, glowAlpha);
+            }
+        }
+    }
+
+    // Second pass: Draw the actual character pixels
+    for (int yy = 0; yy < CHARACTER_HEIGHT; yy++) {
+        for (int xx = 0; xx < CHARACTER_WIDTH; xx++) {
+            unsigned char r = grid[yy][xx][0];
+            unsigned char g = grid[yy][xx][1];
+            unsigned char b = grid[yy][xx][2];
+            
+            if ((r == 0) && (g == 0) && (b == 0)) continue;
+
+            SDL_Rect dstChar = {
+                (Sint16)((float)xx * scale) + offset,
+                (Sint16)((float)yy * scale) + offset,
+                (Uint16)ceilf(scale),
+                (Uint16)ceilf(scale)
+            };
+
+            // Draw the actual pixel at full opacity
+            Uint32 color = SDL_MapRGBA(surface->format, r, g, b, 255);
+            SDL_FillRect(surface, &dstChar, color);
+        }
+    }
+
+    return surface;
 }
 
 void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
                      float x, float y, int hash) {
-#ifdef DEBUG_MONITORING
-    renderStats.totalDrawCalls++;
-    renderStats.currentScale = scale;
-    renderStats.currentGlowSize = glowSize;
-#endif
-    CharacterSprite *cp = NULL;
-    ScaledSprite *sp = NULL;
-    
-    // Find existing character entry
+    if(!view) return;
+
+    CharaterSprite *cp = NULL;
     for (int i = 0; i < characterSpritesCount; i++) {
-        if (characterSprites[i].sprites && characterSprites[i].sprites[0].hash == hash) {
+        if ((characterSprites[i].hash == hash) && (characterSprites[i].sprite)) {
             cp = &characterSprites[i];
-            // Find closest scale
-            float bestScaleDiff = FLT_MAX;
-            for (int j = 0; j < cp->spriteCount; j++) {
-                float scaleDiff = fabsf(cp->sprites[j].scaleKey - scale);
-                if (scaleDiff < bestScaleDiff) {
-                    bestScaleDiff = scaleDiff;
-                    sp = &cp->sprites[j];
-                }
-            }
-            // If scale difference is too large, don't use cached version
-            if (bestScaleDiff > 0.1f) {
-                sp = NULL;
-            }
             break;
         }
     }
+    
+    if (cp == NULL) {
+        cp = &characterSprites[characterSpritesCount];
+        cp->hash = hash;
 
-#ifdef DEBUG_MONITORING
-    if (sp) {
-        renderStats.cacheHits++;
-    } else {
-        renderStats.cacheMisses++;
-    }
-#endif
-    // Create new character entry if needed
-    if (!cp) {
-#ifdef DEBUG_MONITORING
-        renderStats.activeScaledSprites++;
-#endif               
-        if (characterSpritesCount >= MAX_CACHED_CHARACTER_PATTERN_COUNT) {
-            return;  // Cache full
-        }
-        cp = &characterSprites[characterSpritesCount++];
-        cp->sprites = (ScaledSprite*)trackedMalloc(sizeof(ScaledSprite) * cp->maxSprites);
-        if (!cp->sprites) return;
-        cp->spriteCount = 0;
-        
-        // Add new scaled sprite
-        if (cp->spriteCount < cp->maxSprites) {
-            SDL_Surface *surface = createCharacterSurface(grid, scale, glowEnabled && !isInMenu ? glowSize : 0, 
+        SDL_Surface* tempSurface = createCharacterSurface(grid, scale, glowEnabled && !isInMenu ? glowSize: 0,
                 DEFAULT_GLOW_INTENSITY, glowEnabled && !isInMenu);
 
-            if (surface) {
-                sp = &cp->sprites[cp->spriteCount++];
-                sp->sprite = SDL_CreateTextureFromSurface(Renderer, surface);
-                sp->scaleKey = scale;
-                sp->hash = hash;
-                sp->w = surface->w;
-                sp->h = surface->h;
-                SDL_FreeSurface(surface);
+        if (tempSurface) {
+            cp->sprite = tempSurface;
+            
+            if (cp->sprite) {
+                characterSpritesCount++;
             }
         }
     }
 
-    if (sp && sp->sprite) {
-        SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
-        SDL_RenderSetClipRect(Renderer, &dst);
-
-        SDL_Rect dst2 = {
-            (int)((float)(offsetX + x*scale)) - (glowEnabled && !isInMenu ? glowSize : 0), 
-            (int)((float)(offsetY + y*scale)) - (glowEnabled && !isInMenu ? glowSize : 0), 
-            sp->w, 
-            sp->h
+    if(cp && cp->sprite) {
+        SDL_Rect dst = {
+            (Sint16)((float)x * scale) - (glowEnabled && !isInMenu ? glowSize : 0),
+            (Sint16)((float)y * scale) - (glowEnabled && !isInMenu ? glowSize : 0),
+            cp->sprite->w,
+            cp->sprite->h
         };
-
-        SDL_RenderCopy(Renderer, sp->sprite, NULL, &dst2);
+        SDL_BlitSurface(cp->sprite, NULL, view, &dst);
     }
-#ifdef DEBUG_MONITORING
-    logRenderStats();
-#endif    
 }
 
 void md_drawRect(float x, float y, float w, float h, unsigned char r,
-                 unsigned char g, unsigned char b)
-{
+                 unsigned char g, unsigned char b) {
+    if(!view) return;
+
     //adjust for different behaviour between sdl and js in case of negative width / height
-    if(w < 0.0f)
-    {
+    if(w < 0.0f) {
         x += w;
-        w *= -1.0f; 
+        w *= -1.0f;
     }
-
-    if(h < 0.0f)
-    {
+    if(h < 0.0f) {
         y += h;
-        h *= -1.0f; 
+        h *= -1.0f;
     }
 
-    SDL_Rect dst = {offsetX , offsetY, viewW, viewH};
-    SDL_RenderSetClipRect(Renderer, &dst);
-    SDL_Rect dst2 = { (int)(offsetX + x * scale) , (int)(offsetY + y * scale), (int)ceilf(w * scale), (int)ceilf(h  * scale)};
-    SDL_SetRenderDrawColor(Renderer, (Uint8)r, (Uint8)g, (Uint8)b, 255);
+    SDL_Rect rect = {
+        (Sint16)(x * scale),
+        (Sint16)(y * scale),
+        (Uint16)ceilf(w * scale),
+        (Uint16)ceilf(h * scale)
+    };
+
+    // Apply glow first
     if(glowEnabled && !isInMenu)
-        applyGlowToRect(Renderer, dst2, glowSize >> 1, DEFAULT_GLOW_INTENSITY, (Uint8)r, (Uint8)g, (Uint8)b);
-    SDL_RenderFillRect(Renderer, &dst2);
+        applyGlowToRect(view, rect, glowSize >> 1, DEFAULT_GLOW_INTENSITY, r, g, b);
+
+    // Draw the main rectangle
+    Uint32 color = SDL_MapRGBA(view->format, r, g, b, 255);
+    SDL_FillRect(view, &rect, color);
 }
 
 void md_clearView(unsigned char r, unsigned char g, unsigned char b) 
 {
-    //clear screen also in case we resize window
+    if(!view)
+        return;
+    
+	//clear screen also in case we resize window
     md_clearScreen(clearColorR, clearColorG, clearColorB);
-    SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
-    SDL_RenderSetClipRect(Renderer, &dst);
-    SDL_SetRenderDrawColor(Renderer, (Uint8)r, (Uint8)g, (Uint8)b, 255);
-    SDL_Rect dst2 = {offsetX , offsetY, viewW, viewH};
-    SDL_RenderFillRect(Renderer, &dst2);
+    
+	Uint32 color = SDL_MapRGB(view->format, (Uint8)r, (Uint8)g, (Uint8)b);
+    SDL_FillRect(view, NULL, color);
 }
 
 void md_clearScreen(unsigned char r, unsigned char g, unsigned char b)
@@ -857,6 +689,17 @@ static int resizingEventWatcher(void* data, SDL_Event* event) {
   return 0;
 }
 
+static void cleanupView() {
+    if (viewTexture) {
+        SDL_DestroyTexture(viewTexture);
+        viewTexture = NULL;
+    }
+    if (view) {
+        SDL_FreeSurface(view);
+        view = NULL;
+    }
+}
+
 void md_initView(int w, int h) 
 {
     origViewW = w;
@@ -871,8 +714,20 @@ void md_initView(int w, int h)
     viewH = (int)ceilf((float)h * scale);
     offsetX = (int)(WINDOW_WIDTH - viewW) >> 1;
     offsetY = (int)(WINDOW_HEIGHT - viewH) >> 1;
-    SDL_Rect dst = {offsetX , offsetY, viewW, viewH};
-    SDL_RenderSetClipRect(Renderer, &dst);  
+    
+    // Cleanup existing resources
+    cleanupView();
+    
+    // Create new surface
+    view = SDL_CreateRGBSurfaceWithFormat(0, viewW, viewH, 32, SDL_PIXELFORMAT_RGBA8888);
+    if (view) {
+        // Create texture from surface
+        viewTexture = SDL_CreateTexture(Renderer, 
+                                      SDL_PIXELFORMAT_RGBA8888,
+                                      SDL_TEXTUREACCESS_STREAMING,
+                                      viewW, viewH);
+    }
+    
     float gScaleX =  (float)w / 100.0f ;
     float gScaleY =  (float)h / 100.0f ;
     float gScale;
@@ -883,6 +738,7 @@ void md_initView(int w, int h)
     glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
     resetCharacterSprite();
 }
+
 
 void md_consoleLog(char* msg) 
 { 
@@ -964,52 +820,54 @@ void update() {
         }
     }
 
-
-
-	updateFrame();
+    updateFrame();
     if(!isInMenu && (overlay == 1))
     {
         SDL_Rect dst;
-        SDL_Rect clipRect = {offsetX, offsetY, viewW, viewH};
-        SDL_RenderSetClipRect(Renderer, &clipRect);
-              
+        
+        float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
+        float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
+        float wscale = (wscaley < wscalex) ? wscaley : wscalex;
+        
         // Always ensure minimum 1 pixel
         float pixelSize = ceilf(1.0f * wscale);
         
-        // Draw vertical lines
-        for (float x = 0; x < viewW; x += 2.0f * pixelSize)
-        {
-            dst.x = offsetX + x;
-            dst.y = offsetY;
-            dst.w = pixelSize;
-            dst.h = viewH;
-            SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-            SDL_RenderFillRect(Renderer, &dst);
-        }
-
          // Draw vertical lines
         for (float x = 0; x < viewW; x += pixelSize * 2.0f)
         {
-            dst.x = offsetX + (int)x;
-            dst.y = offsetY;
+            dst.x = (int)x;
+            dst.y = 0;
             dst.w = (int)pixelSize;
             dst.h = viewH;
-            SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-            SDL_RenderFillRect(Renderer, &dst);
+            SDL_FillRect(view, &dst, SDL_MapRGB(view->format, 0,0,0));
         }
 
         // Draw horizontal lines
         for (float y = 0; y < viewH; y += pixelSize * 2.0f)
         {
-            dst.x = offsetX;
-            dst.y = offsetY + (int)y;
+            dst.x = 0;
+            dst.y = (int)y;
             dst.w = viewW;
             dst.h = (int)pixelSize;
-            SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
-            SDL_RenderFillRect(Renderer, &dst);
+            SDL_FillRect(view, &dst, SDL_MapRGB(view->format, 0,0,0));
         }
     }
-    SDL_RenderPresent(Renderer);
+
+    // Update texture from surface
+    if (view && viewTexture) {
+        SDL_UpdateTexture(viewTexture, NULL, view->pixels, view->pitch);
+        
+        // Clear renderer
+        SDL_SetRenderDrawColor(Renderer, clearColorR, clearColorG, clearColorB, 255);
+        SDL_RenderClear(Renderer);
+        
+        // Draw the view texture
+        SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
+        SDL_RenderCopy(Renderer, viewTexture, NULL, &dst);
+        
+        // Present the renderer
+        SDL_RenderPresent(Renderer);
+    }
 }
 
 void printHelp(char* exe)
@@ -1068,7 +926,6 @@ int main(int argc, char **argv)
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) == 0)
     {
         SDL_Log("SDL Succesfully initialized\n");
-        initMonitoring();
         float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
         float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
         wscale = (wscaley < wscalex) ? wscaley : wscalex;
@@ -1138,7 +995,6 @@ int main(int argc, char **argv)
         {
             SDL_Log("Failed to create SDL_Window %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
         }
-        cleanupMonitoring();
         SDL_Quit();
     }
     else
