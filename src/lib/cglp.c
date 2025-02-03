@@ -1083,13 +1083,14 @@ void updateFrame() {
   difficulty = (float)ticks / 60 / FPS + 1;
   if (state == STATE_TITLE) {
     updateTitle();
+    drawScore();
   } else if (state == STATE_IN_GAME) {
     updateInGame();
+    drawScore();
   } else if (state == STATE_GAME_OVER) {
     updateGameOver();
   }
   updateSound();
-  drawScore();
   ticks++;
   if (currentInput.up.isPressed && currentInput.down.isPressed) {
     if (currentInput.a.isJustPressed) {

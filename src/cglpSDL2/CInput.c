@@ -121,6 +121,8 @@ void CInput_HandleKeyboardEvent(CInput *Input, int Key, bool Value)
 		case BUTTON_SOUNDSWITCH:
 			Input->Buttons.ButY = Value;
 			break;
+		case BUTTON_GLOWSWITCH:
+			Input->Buttons.ButX = Value;
 		default:
 			break;
 	}
