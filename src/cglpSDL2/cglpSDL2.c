@@ -716,6 +716,15 @@ void md_initView(int w, int h)
     offsetX = (int)(WINDOW_WIDTH - viewW) >> 1;
     offsetY = (int)(WINDOW_HEIGHT - viewH) >> 1;
     
+    float gScaleX =  (float)w / 100.0f ;
+    float gScaleY =  (float)h / 100.0f ;
+    float gScale;
+    if (gScaleY > gScaleX)
+        gScale = gScaleY;
+    else
+        gScale = gScaleX;
+    glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
+    
     // Cleanup existing resources
     cleanupView();
     
@@ -728,15 +737,6 @@ void md_initView(int w, int h)
                                       SDL_TEXTUREACCESS_STREAMING,
                                       viewW, viewH);
     }
-    
-    float gScaleX =  (float)w / 100.0f ;
-    float gScaleY =  (float)h / 100.0f ;
-    float gScale;
-    if (gScaleY > gScaleX)
-        gScale = gScaleY;
-    else
-        gScale = gScaleX;
-    glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
     resetCharacterSprite();
 }
 
