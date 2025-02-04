@@ -678,10 +678,6 @@ static int resizingEventWatcher(void* data, SDL_Event* event) {
       event->window.event == SDL_WINDOWEVENT_RESIZED) {
     SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
     if (win == (SDL_Window*)data) {
-        SDL_GetRendererOutputSize(Renderer, &WINDOW_WIDTH , &WINDOW_HEIGHT);
-        float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
-        float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
-        wscale = (wscaley < wscalex) ? wscaley : wscalex;
         md_initView(origViewW, origViewH);
         md_clearScreen(clearColorR, clearColorG, clearColorB);
     }
@@ -703,6 +699,10 @@ static void cleanupView() {
 void md_initView(int w, int h) 
 {
     SDL_GetRendererOutputSize(Renderer, &WINDOW_WIDTH , &WINDOW_HEIGHT);
+    float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
+    float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
+    wscale = (wscaley < wscalex) ? wscaley : wscalex;
+
     origViewW = w;
     origViewH = h;
     float xScale = (float)WINDOW_WIDTH / w;
@@ -825,11 +825,7 @@ void update() {
     if(!isInMenu && (overlay == 1))
     {
         SDL_Rect dst;
-        
-        float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
-        float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
-        float wscale = (wscaley < wscalex) ? wscaley : wscalex;
-        
+
         // Always ensure minimum 1 pixel
         float pixelSize = ceilf(1.0f * wscale);
         
@@ -927,12 +923,6 @@ int main(int argc, char **argv)
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) == 0)
     {
         SDL_Log("SDL Succesfully initialized\n");
-        SDL_GetRendererOutputSize(Renderer, &WINDOW_WIDTH , &WINDOW_HEIGHT);
-        float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
-        float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
-        wscale = (wscaley < wscalex) ? wscaley : wscalex;
-        glowSize = (float)DEFAULT_GLOW_SIZE * wscale;
-
         Uint32 WindowFlags = SDL_WINDOW_RESIZABLE;
         if (fullScreen)
         {
