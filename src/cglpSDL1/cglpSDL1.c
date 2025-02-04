@@ -46,6 +46,8 @@ static unsigned char clearColorG = 0;
 static unsigned char clearColorB = 0;
 static Uint32 clearColor = 0;
 static float audioVolume = 1.00f;
+static int offsetX = 0;
+static int offsetY = 0;
 static SDL_Surface *screen = NULL, *view = NULL;
 static int soundOn = 0;
 static int useBugSound = 1;
@@ -682,7 +684,9 @@ void md_initView(int w, int h)
         scale = xScale;
     viewW = (int)ceilf((float)w * scale);
     viewH = (int)ceilf((float)h * scale);
-    
+    offsetX = (int)(WINDOW_WIDTH - viewW) >> 1;
+    offsetY = (int)(WINDOW_HEIGHT - viewH) >> 1;
+
     float gScaleX =  (float)w / 100.0f ;
     float gScaleY =  (float)h / 100.0f ;
     float gScale;
@@ -744,9 +748,17 @@ void update()
             quit = 1;
     }
 
+    int tmpX, tmpY;
+    Uint8 butState = SDL_GetMouseState(&tmpX, &tmpY);
+
     setButtonState(keys[BUTTON_LEFT] == 1, keys[BUTTON_RIGHT] == 1, keys[BUTTON_UP] == 1,
-        keys[BUTTON_DOWN] == 1, keys[BUTTON_B] == 1, keys[BUTTON_A] == 1);
+        keys[BUTTON_DOWN] == 1, (keys[BUTTON_B] == 1) || (butState & SDL_BUTTON(3)), (keys[BUTTON_A] == 1) || (butState & SDL_BUTTON(1)));
     
+    
+    float mouseX = ((tmpX - offsetX) / scale);
+    float mouseY = ((tmpY - offsetY) / scale);
+    setMousePos(mouseX, mouseY);
+
     if ((prevKeys[BUTTON_VOLDOWN] == 0) && (keys[BUTTON_VOLDOWN] == 1))
     {
         audioVolume -= 0.05f;
@@ -838,7 +850,7 @@ void update()
         }
     }
     SDL_Rect src = {0, 0, viewW, viewH};
-    SDL_Rect dst = {(WINDOW_WIDTH - viewW) >> 1, (WINDOW_HEIGHT - viewH) >> 1, viewW, viewH};
+    SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
     SDL_BlitSurface(view, &src, screen, &dst);
     SDL_Flip(screen);
 
