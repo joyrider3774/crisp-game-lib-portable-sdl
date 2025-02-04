@@ -3,7 +3,7 @@ This is a repo containing sdl ports of the crisp games library which is a Minima
 Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
 
 see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL1) for SDL 1 Port
-- Keyboard only
+- keyboard or mouse only
 - Sound support
 - Extra added games
 - Sections inside the menu's
@@ -11,7 +11,7 @@ see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Funkey version is based on this version
   
 see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL2) for SDL 1 Port
-- keyboard, mouse and gamepads support using Gamecontroller Api
+- keyboard, mouse or gamepads support using Gamecontroller Api
 - Sound support
 - Extra added games
 - Sections inside the menu's
