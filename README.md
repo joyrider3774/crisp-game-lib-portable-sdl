@@ -18,6 +18,20 @@ see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Ability to have more than 16 games in the menu
 - Works on many chinese emulation handhelds if you crosscompile (rg35xx sp, rg35xx plus, trimui smart pro, rgb30, ..)
 
+**Windows versions of the SDL2 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
+
+Controls:
+- Keyboard Controls: X, C, ESC, PageUp, PageDown and arrow keys
+- Game Pad (XBox) Controls: A, B, Back, LB, RB and Joystick or dpad
+
+Commandline parameters:
+- -f: Run fullscreen windowed (desktop resolution)
+- -w XXX: use window width XXX
+- -h YYY: use window height YYY
+- -ns: no sound
+- -a: use accelerated renderer (by default software renderer is used)
+
+
 ## Target devices
 
 <img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotPlaydate.gif" width="33%"><img src="./docs/screenshotPyBadge.gif" width="33%"><img src="./docs/screenshotFunkeyRgnano.gif" width="33%"><img src="./docs/screenshotRGB30.gif" width="33%"><img src="./docs/screenshotTrimuiSmartPro.gif" width="33%">
