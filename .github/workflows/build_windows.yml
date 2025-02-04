@@ -43,7 +43,6 @@ jobs:
       - name: Copy dll libraries
         shell: msys2 {0}
         run: |
-          cp /${{matrix.sys}}/bin/libstdc*.dll "./Release/${{matrix.name}}/"
           cp /${{matrix.sys}}/bin/SDL2.dll "./Release/${{matrix.name}}/"
           
       - name: Store build
