@@ -1,6 +1,12 @@
 # SDL Version of crisp-game-lib-portable
+![DownloadCountTotal](https://img.shields.io/github/downloads/joyrider3774/crisp-game-lib-portable-sdl/total?label=total%20downloads&style=plastic) ![DownloadCountLatest](https://img.shields.io/github/downloads/joyrider3774/crisp-game-lib-portable-sdl/latest/total?style=plastic) ![LatestVersion](https://img.shields.io/github/v/tag/joyrider3774/crisp-game-lib-portable-sdl?label=Latest%20version&style=plastic) ![License](https://img.shields.io/github/license/joyrider3774/crisp-game-lib-portable-sdl?style=plastic)
+
+<img src="./docs/screenshotFunkeyRgnano.gif" width="33%"><img src="./docs/screenshotRGB30.gif" width="33%"><img src="./docs/screenshotTrimuiSmartPro.gif" width="33%">
+
 This is a repo containing sdl ports of the crisp games library which is a Minimal C-lang library for creating classic arcade-like mini-games running on devices and browsers. 
 Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
+
+
 
 see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL1) for SDL 1 Port
 - keyboard or mouse only
@@ -34,7 +40,7 @@ Commandline parameters:
 
 ## Target devices
 
-<img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotPlaydate.gif" width="33%"><img src="./docs/screenshotPyBadge.gif" width="33%"><img src="./docs/screenshotFunkeyRgnano.gif" width="33%"><img src="./docs/screenshotRGB30.gif" width="33%"><img src="./docs/screenshotTrimuiSmartPro.gif" width="33%">
+<img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotPlaydate.gif" width="33%"><img src="./docs/screenshotPyBadge.gif" width="33%">
 
 
 - [M5StickC PLUS](https://docs.m5stack.com/en/core/m5stickc_plus)
