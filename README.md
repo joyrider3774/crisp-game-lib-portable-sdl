@@ -10,7 +10,7 @@ see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Ability to have more than 16 games in the menu
 - Funkey version is based on this version
   
-see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL2) for SDL 1 Port
+see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL2) for SDL 2 Port
 - keyboard, mouse or gamepads support using Gamecontroller Api
 - Sound support
 - Extra added games
