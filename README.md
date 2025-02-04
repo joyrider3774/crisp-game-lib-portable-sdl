@@ -20,7 +20,8 @@ see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 
 ## Target devices
 
-<img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotPlaydate.gif" width="33%"><img src="./docs/screenshotPyBadge.gif" width="33%">
+<img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotPlaydate.gif" width="33%"><img src="./docs/screenshotPyBadge.gif" width="33%"><img src="./docs/screenshotM5StickCPlus.gif" width="33%"><img src="./docs/screenshotRGB30.gif" width="33%">
+
 
 - [M5StickC PLUS](https://docs.m5stack.com/en/core/m5stickc_plus)
 - [M5Stack BASIC](http://docs.m5stack.com/en/core/basic)
