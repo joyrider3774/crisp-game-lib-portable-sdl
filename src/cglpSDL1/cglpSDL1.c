@@ -37,8 +37,13 @@ static int prevKeys[SDLK_LAST];
 static float scale = 1.0f;
 static int viewW = DEFAULT_WINDOW_WIDTH;
 static int viewH = DEFAULT_WINDOW_HEIGHT;
+static int origViewW = DEFAULT_WINDOW_WIDTH;
+static int origViewH = DEFAULT_WINDOW_HEIGHT;
 static Uint32 frameticks = 0;
 static float frameTime = 0.0f;
+static unsigned char clearColorR = 0;
+static unsigned char clearColorG = 0;
+static unsigned char clearColorB = 0;
 static Uint32 clearColor = 0;
 static float audioVolume = 1.00f;
 static SDL_Surface *screen = NULL, *view = NULL;
@@ -48,6 +53,7 @@ static int overlay = DEFAULT_OVERLAY;
 static int glowSize = DEFAULT_GLOW_SIZE;
 static float wscale = 1.0f;
 static bool glowEnabled = DEFAULT_GLOWENABLED;
+static Uint32 videoFlags = SDL_SWSURFACE;
 
 static SDL_AudioSpec audiospec = {0};
 
@@ -123,7 +129,6 @@ static void initCharacterSprite() {
     distanceTable = NULL;  // Initialize distance table pointer
 }
 
-// Add to resetCharacterSprite
 static void resetCharacterSprite() {
     for (int i = 0; i < characterSpritesCount; i++) {
         SDL_FreeSurface(characterSprites[i].sprite);
@@ -652,34 +657,32 @@ void md_clearScreen(unsigned char r, unsigned char g, unsigned char b)
 {
     if(!screen)
         return;
-
+    clearColorR = r;
+    clearColorG = g;
+    clearColorB = b;
     clearColor = SDL_MapRGB(screen->format, (Uint8)r, (Uint8)g, (Uint8)b);
     SDL_FillRect(screen, NULL, clearColor);
 }
 
 void md_initView(int w, int h) 
 {
+    WINDOW_WIDTH = screen->w;
+    WINDOW_HEIGHT = screen->h;
+    float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
+    float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
+    wscale = (wscaley < wscalex) ? wscaley : wscalex;
+
+    origViewW = w;
+    origViewH = h;
     float xScale = (float)WINDOW_WIDTH / w;
     float yScale = (float)WINDOW_HEIGHT / h;
     if (yScale < xScale)
         scale = yScale;
     else
         scale = xScale;
-    viewW = w * scale;
-    viewH = h * scale;
-
-    if(view)
-    {
-        SDL_FreeSurface(view);
-        view = NULL;
-    }
-
-    SDL_Surface *tmp = SDL_CreateRGBSurface(screen->flags, viewW, viewH, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
-    if(tmp)
-    {
-        view = SDL_DisplayFormat(tmp);
-        SDL_FreeSurface(tmp);
-    }
+    viewW = (int)ceilf((float)w * scale);
+    viewH = (int)ceilf((float)h * scale);
+    
     float gScaleX =  (float)w / 100.0f ;
     float gScaleY =  (float)h / 100.0f ;
     float gScale;
@@ -688,6 +691,20 @@ void md_initView(int w, int h)
     else
         gScale = gScaleX;
     glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
+
+    if(view)
+    {
+        SDL_FreeSurface(view);
+        view = NULL;
+    }
+
+    SDL_Surface* tmp = SDL_CreateRGBSurface(screen->flags, viewW, viewH, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+    if(tmp)
+    {
+        view = SDL_DisplayFormat(tmp);
+        SDL_FreeSurface(tmp);
+    }
+    
     resetCharacterSprite();
 }
 
@@ -704,6 +721,15 @@ void update()
     SDL_Event event;
     while(SDL_PollEvent(&event))
     {
+        if (event.type == SDL_VIDEORESIZE)
+        {
+            if(screen)
+                SDL_FreeSurface(screen);
+            screen = SDL_SetVideoMode(event.resize.w, event.resize.h, 0, videoFlags);
+            md_initView(origViewW, origViewH);
+            md_clearScreen(clearColorR, clearColorG, clearColorB);
+        }
+
         if(event.type == SDL_KEYDOWN)
         {
             keys[event.key.keysym.sym] = 1;
@@ -787,10 +813,6 @@ void update()
     if(!isInMenu && (overlay == 1))
     {
         SDL_Rect dst;
-        
-        float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
-        float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
-        float wscale = (wscaley < wscalex) ? wscaley : wscalex;
         
         // Always ensure minimum 1 pixel
         float pixelSize = ceilf(1.0f * wscale);
@@ -877,23 +899,21 @@ int main(int argc, char **argv)
 			
 		}
 
-		Uint32 flags = SDL_SWSURFACE;
+		videoFlags = SDL_SWSURFACE;
         if(useHWSurface)
-            flags = SDL_HWSURFACE;
+            videoFlags = SDL_HWSURFACE;
 
 		if(fullScreen)
-			flags |= SDL_FULLSCREEN;
+			videoFlags |= SDL_FULLSCREEN;
+        else
+            videoFlags |= SDL_RESIZABLE;
         
-        screen = SDL_SetVideoMode( WINDOW_WIDTH, WINDOW_HEIGHT, 0, flags);
+        
+        screen = SDL_SetVideoMode( WINDOW_WIDTH, WINDOW_HEIGHT, 0, videoFlags);
 		if(screen)
 		{
 			SDL_WM_SetCaption( "Crisp Game Lib Portable Sdl1", NULL);
 			printf("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
-            SDL_ShowCursor(SDL_DISABLE);
-            float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
-            float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
-            wscale = (wscaley < wscalex) ? wscaley : wscalex;
-            glowSize = (float)DEFAULT_GLOW_SIZE * wscale;
             if(!noAudioInit)
             {
                 soundOn = InitAudio();
