@@ -78,6 +78,7 @@ void addGames() {
   addGameAntLion();
   addGameTwofaced();
   addGameBombup();
+  addGameBsfish();
   addGameBwalls();
   addGameCatapult();
   addGameCateP();
@@ -92,7 +93,6 @@ void addGames() {
   //inccorect
   addGameSection("======BUGGED=====");
   addGameAccelB();
-  addGameBsfish();
 
   addGameSection("===BUGGED MOUSE==");
 
