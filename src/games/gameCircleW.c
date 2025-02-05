@@ -106,7 +106,7 @@ static void update() {
     Vector pos;
     float radius;
     int type = nextDangerCount == 0 ? DANGER : NORMAL;
-    color = CYAN;
+    color = TRANSPARENT;
     for (int i = 0; i < 9; i++) {
       radius = rnd(8, 15);
       pos.x = 200 + radius;
