@@ -85,7 +85,12 @@ typedef struct {
   Vector size;
 } HitBox;
 
-#define MAX_HIT_BOX_COUNT 256
+//had to increase for:
+//gameCircleW (reached around 800) if too many hitboxes is hit game fails to function properly and will draw circles over each other
+//gameFrog (reached around 1580)
+//R Wheel (reached around 400 can probably hit more)
+//B Cannon (reached around 300 depending on nr of balls)
+#define MAX_HIT_BOX_COUNT 2048
 /// \endcond
 static HitBox hitBoxes[MAX_HIT_BOX_COUNT];
 static int hitBoxesIndex;
@@ -189,13 +194,21 @@ static void addRect(bool isAlignCenter, float x, float y, float w, float h,
   ColorRgb *rgb = &colorRgbs[color];
   md_drawRect(x, y, w, h, rgb->r, rgb->g, rgb->b);
 }
-
+#ifdef DEBUG
+static int maxHitBoxes = 0;
+#endif
 static bool isShownTooManyHitBoxesMessage = false;
-
 static void addHitBox(HitBox hb) {
   if (hitBoxesIndex < MAX_HIT_BOX_COUNT) {
     hitBoxes[hitBoxesIndex] = hb;
     hitBoxesIndex++;
+#ifdef DEBUG    
+    if(hitBoxesIndex > maxHitBoxes)
+    {
+      maxHitBoxes = hitBoxesIndex;
+      consoleLog("New Hitbox Max %d", maxHitBoxes);
+    }
+#endif
   } else {
     if (!isShownTooManyHitBoxesMessage) {
       consoleLog("too many hit boxes");

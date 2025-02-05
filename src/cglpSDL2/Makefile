@@ -1,3 +1,4 @@
+DEBUG = 0
 SRC_DIR = ./src/cglpSDL2  
 LIB_DIR = ./src/lib
 GME_DIR = ./src/games
@@ -18,15 +19,22 @@ OBJS+=$(addprefix $(OBJ_DIR)/, $(GME_DIR_SRC:.c=.o))
 INCS = -I$(SRC_DIR) -I$(LIB_DIR) -I$(GME_DIR)
 SDL_CONFIG = sdl2-config
 CC = gcc
-OPT_LEVEL ?= -O2 
-CFLAGS ?= -g -Wall -Wextra `$(SDL_CONFIG) --cflags`
-LDFLAGS ?= -g
+CFLAGS ?= -Wall -Wextra `$(SDL_CONFIG) --cflags`
+LDFLAGS ?=
 LDLIBS ?= `$(SDL_CONFIG) --libs` -lm 
 
+ifeq ($(DEBUG),0)
+OPT_LEVEL ?= -O2
+else
+CFLAGS += -g -DDEBUG
+LDFLAGS += -g
+endif
 
-#ifeq ($(OS),Windows_NT)
-#LDLIBS += -mconsole
-#endif
+ifeq ($(OS),Windows_NT)
+ifneq ($(DEBUG),0)
+LDLIBS += -mconsole
+endif
+endif
 
 #MINGW does not have X11 and does not require it
 #dont know about cygwin

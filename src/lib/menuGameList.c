@@ -26,10 +26,12 @@ void addGameBallsBombs();
 void addGameAntLion();
 void addGameTwofaced();
 void addGameBombup();
+void addGameBsfish();
 void addGameBwalls();
 void addGameCatapult();
 void addGameCateP();
 void addGameChargeBeam();
+void addGameCirclew();
 
 //working requires mouse 
 void addGameBBlast();
@@ -39,7 +41,6 @@ void addGameCardq();
 
 //working inccorectly
 void addGameAccelB();
-void addGameBsfish();
 
 //working inccorectly requires mouse 
 
@@ -83,6 +84,7 @@ void addGames() {
   addGameCatapult();
   addGameCateP();
   addGameChargeBeam();
+  addGameCirclew();
 
   addGameSection("======MOUSE======");
   addGameBBlast();
