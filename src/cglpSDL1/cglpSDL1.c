@@ -40,7 +40,7 @@ static int viewH = DEFAULT_WINDOW_HEIGHT;
 static int origViewW = DEFAULT_WINDOW_WIDTH;
 static int origViewH = DEFAULT_WINDOW_HEIGHT;
 static Uint32 frameticks = 0;
-static float frameTime = 0.0f;
+static Uint32 frameTime = 0;
 static unsigned char clearColorR = 0;
 static unsigned char clearColorG = 0;
 static unsigned char clearColorB = 0;
@@ -56,8 +56,14 @@ static int glowSize = DEFAULT_GLOW_SIZE;
 static float wscale = 1.0f;
 static bool glowEnabled = DEFAULT_GLOWENABLED;
 static Uint32 videoFlags = SDL_SWSURFACE;
-
+static bool nodelay = false;
 static SDL_AudioSpec audiospec = {0};
+
+static bool showfps = false;
+static int fps = 0;
+static int framecount = 0;
+static int lastfpstime = 0;
+
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -821,7 +827,7 @@ void update()
         } 
     }
 
-    updateFrame();    
+    updateFrame();  
     if(!isInMenu && (overlay == 1))
     {
         SDL_Rect dst;
@@ -849,6 +855,17 @@ void update()
             SDL_FillRect(view, &dst, SDL_MapRGB(view->format, 0,0,0));
         }
     }
+    if(showfps)
+    {
+        char fpsText[10];
+        sprintf(fpsText, "%d", fps);
+        int prev = color;
+        color = BLACK;
+        rect(0,0,strlen(fpsText)*6, 6);
+        color = WHITE;
+        text(fpsText, 2, 3);
+        color = prev;
+    }   
     SDL_Rect src = {0, 0, viewW, viewH};
     SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
     SDL_BlitSurface(view, &src, screen, &dst);
@@ -873,6 +890,8 @@ void printHelp(char* exe)
     printf("  -f: Run fullscreen\n");
     printf("  -ns: No Sound\n");
     printf("  -a: Use hardware (accelerated) surfaces\n");
+    printf("  -fps: Show fps");
+    printf("  -nd: no fps delay (run as fast as possible)");
 }
 
 int main(int argc, char **argv)
@@ -895,8 +914,14 @@ int main(int argc, char **argv)
 			if(strcasecmp(argv[i], "-f") == 0)
 				fullScreen = true;
 
+            if(strcasecmp(argv[i], "-fps") == 0)
+                showfps = true;
+
             if(strcasecmp(argv[i], "-ns") == 0)
 				noAudioInit = true;
+
+            if(strcasecmp(argv[i], "-nd") == 0)
+			    nodelay = true;
             
             if(strcasecmp(argv[i], "-a") == 0)
 				useHWSurface = true;
@@ -943,9 +968,19 @@ int main(int argc, char **argv)
                 if(quit == 0)
                 {
                     frameTime = SDL_GetTicks() - frameticks;
-                    float delay = 1000.0f / FPS - frameTime;
-                    if (delay > 0.0f)
-                        SDL_Delay((Uint32)(delay));
+                    double delay = 1000.0f / FPS - frameTime;
+                    if (!nodelay && (delay > 0.0f))
+                        SDL_Delay((Uint32)(delay)); 
+                    if (showfps)
+                    {
+                        framecount++;
+                        if(SDL_GetTicks() - lastfpstime >= 1000)
+                        {
+                            fps = framecount;
+                            framecount = 0;
+                            lastfpstime = SDL_GetTicks();
+                        }
+                    }
                 }
             } 
         

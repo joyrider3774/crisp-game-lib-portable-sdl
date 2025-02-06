@@ -36,6 +36,8 @@ Commandline parameters:
 - -h YYY: use window height YYY
 - -ns: no sound
 - -a: use accelerated renderer (by default software renderer is used)
+- -fps: show fps
+- -nd: no fps delay (run as fast as possible)
 
 
 ## Target devices

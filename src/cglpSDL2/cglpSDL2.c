@@ -61,6 +61,13 @@ static float wscale = 1.0f;
 static bool glowEnabled = DEFAULT_GLOW_ENABLED;
 static SDL_Surface *view = NULL;
 static SDL_Texture *viewTexture = NULL;
+static bool nodelay = false;
+
+static bool showfps = false;
+static int fps = 0;
+static int framecount = 0;
+static int lastfpstime = 0;
+
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -849,7 +856,17 @@ void update() {
             SDL_FillRect(view, &dst, SDL_MapRGB(view->format, 0,0,0));
         }
     }
-
+    if(showfps)
+    {
+        char fpsText[10];
+        sprintf(fpsText, "%d", fps);
+        int prev = color;
+        color = BLACK;
+        rect(0,0,strlen(fpsText)*6, 6);
+        color = WHITE;
+        text(fpsText, 2, 3);
+        color = prev;
+    }
     // Update texture from surface
     if (view && viewTexture) {
         SDL_UpdateTexture(viewTexture, NULL, view->pixels, view->pitch);
@@ -861,7 +878,7 @@ void update() {
         // Draw the view texture
         SDL_Rect dst = {offsetX, offsetY, viewW, viewH};
         SDL_RenderCopy(Renderer, viewTexture, NULL, &dst);
-        
+
         // Present the renderer
         SDL_RenderPresent(Renderer);
     }
@@ -884,6 +901,8 @@ void printHelp(char* exe)
     printf("  -f: Run fullscreen\n");
     printf("  -ns: No Sound\n");
     printf("  -a: Use hardware accelerated rendering (default is software)\n");
+    printf("  -fps: Show fps");
+    printf("  -nd: no fps delay (run as fast as possible)");
 }
 
 int main(int argc, char **argv)
@@ -906,8 +925,14 @@ int main(int argc, char **argv)
         if(strcasecmp(argv[i], "-a") == 0)
             useHWSurface = true;
         
+        if(strcasecmp(argv[i], "-fps") == 0)
+            showfps = true;
+        
         if(strcasecmp(argv[i], "-ns") == 0)
 			noAudioInit = true;
+
+        if(strcasecmp(argv[i], "-nd") == 0)
+			nodelay = true;
 
         if(strcasecmp(argv[i], "-w") == 0)
             if(i+1 < argc)
@@ -969,8 +994,18 @@ int main(int argc, char **argv)
                         Uint64 FramePerf = frameEndTicks - frameticks;
                         frameTime = FramePerf / (double)SDL_GetPerformanceFrequency() * 1000.0f;
                         double delay = 1000.0f / FPS - frameTime;
-                        if (delay > 0.0f)
-                            SDL_Delay((Uint32)(delay));                                                   
+                        if (!nodelay && (delay > 0.0f))
+                            SDL_Delay((Uint32)(delay)); 
+                        if (showfps)
+                        {
+                            framecount++;
+                            if(SDL_GetTicks() - lastfpstime >= 1000)
+                            {
+                                fps = framecount;
+                                framecount = 0;
+                                lastfpstime = SDL_GetTicks();
+                            }
+                        }
                     }
                 }           
                 CInput_Destroy(GameInput);
