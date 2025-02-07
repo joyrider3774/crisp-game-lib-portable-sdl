@@ -40,6 +40,7 @@ Commandline parameters:
 - -nd: no fps delay (run as fast as possible)
 - -list: List game names to be used with -g option
 - -g <GAMENAME>: run game <GAMENAME> only
+- -ms: Make screenshot of every game
 
 
 ## Target devices

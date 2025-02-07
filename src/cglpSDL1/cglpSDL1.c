@@ -908,6 +908,7 @@ void printHelp(char* exe)
     printf("  -nd: no fps delay (run as fast as possible)\n");
     printf("  -list: List game names to be used with -g option\n");
     printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
+    printf("  -ms: Make screenshot of every game\n");
 }
 
 int main(int argc, char **argv)
@@ -918,6 +919,7 @@ int main(int argc, char **argv)
 		bool fullScreen = false;
         bool useHWSurface = false;
         bool noAudioInit = false;
+        bool makescreenshots = false;
 		for (int i=0; i < argc; i++)
 		{
             if((strcasecmp(argv[i], "-?") == 0) || (strcasecmp(argv[i], "--?") == 0) || 
@@ -969,6 +971,9 @@ int main(int argc, char **argv)
                 }
                 return 0;
             }
+
+            if(strcasecmp(argv[i], "-ms") == 0)
+                makescreenshots = true;
 			
 		}
 
@@ -987,6 +992,28 @@ int main(int argc, char **argv)
 		{
 			SDL_WM_SetCaption( "Crisp Game Lib Portable Sdl1", NULL);
 			printf("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
+            initCharacterSprite();
+            initGame();
+            if(makescreenshots)
+            {
+                quit = 1;
+                for (int i = 1; i < gameCount; i++)
+                {
+                    if(getGame(i).update == NULL)
+                        continue;
+                    restartGame(i);
+                    setButtonState(false,false,false,false,false,false);
+                    updateFrame();
+                    setButtonState(false,false,false,false,false,true);
+                    updateFrame();
+                    setButtonState(false,false,false,false,false,false);
+                    for (int j = 0; j < 140; j++)
+                        updateFrame();
+                    char filename[512];
+                    sprintf(filename, "./%s.bmp", getGame(i).title);
+                    SDL_SaveBMP(view, filename);
+                }
+            }
             if(!noAudioInit)
             {
                 soundOn = InitAudio();
@@ -994,9 +1021,7 @@ int main(int argc, char **argv)
                     printf("Succesfully opened audio\n");
                 else
                     printf("Failed to open audio\n");
-            }
-            initCharacterSprite();
-            initGame();
+            } 
             if (startgame > 1)
             {
                 int tmp = startgame;
