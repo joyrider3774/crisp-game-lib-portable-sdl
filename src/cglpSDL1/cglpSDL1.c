@@ -61,13 +61,11 @@ static SDL_AudioSpec audiospec = {0};
 static int startgame = -1;
 
 static bool showfps = false;
-static int fps = 0;
-static int avgfps = 0;
-static Uint32 fpssum = 0;
+static float avgfps = 0;
+static int fpssum = 0;
 static int framecount = 0;
 static int lastfpstime = 0;
-static int avgcount = -1;
-
+static int avgcount = 0;
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -872,7 +870,7 @@ void update()
     if(showfps)
     {
         char fpsText[10];
-        sprintf(fpsText, "%d %d", fps, avgfps);
+        sprintf(fpsText, "%.2f", avgfps);
         int prev = color;
         color = BLACK;
         rect(0,0,strlen(fpsText)*6, 6);
@@ -1036,6 +1034,7 @@ int main(int argc, char **argv)
                     }
                 }
             }
+            int skip = 10;
             while(quit == 0)
             {
                 frameticks = SDL_GetTicks();
@@ -1048,16 +1047,27 @@ int main(int argc, char **argv)
                         SDL_Delay((Uint32)(delay)); 
                     if (showfps)
                     {
-                        framecount++;
-                        if(SDL_GetTicks() - lastfpstime >= 1000)
+                        if(skip > 0)
                         {
-                            fps = framecount;
-                            fpssum += fps;
-                            avgcount++;
-                            if(avgcount > 0)
-                                avgfps = fpssum / avgcount;
-                            framecount = 0;
+                            skip--;
                             lastfpstime = SDL_GetTicks();
+                        }
+                        else
+                        {
+                            framecount++;
+                            if(SDL_GetTicks() - lastfpstime >= 1000)
+                            {
+                                fpssum += framecount;
+                                avgcount++;
+                                avgfps = (float)fpssum / avgcount;
+                                if(avgcount % 5 == 0)
+                                {
+                                    fpssum = 0;
+                                    avgcount = 0;
+                                }
+                                framecount = 0;
+                                lastfpstime = SDL_GetTicks();
+                            }
                         }
                     }
                 }
