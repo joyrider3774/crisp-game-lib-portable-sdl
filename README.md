@@ -38,6 +38,8 @@ Commandline parameters:
 - -a: use accelerated renderer (by default software renderer is used)
 - -fps: show fps
 - -nd: no fps delay (run as fast as possible)
+- -list: List game names to be used with -g option
+- -g <GAMENAME>: run game <GAMENAME> only
 
 
 ## Target devices

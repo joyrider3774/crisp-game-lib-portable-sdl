@@ -58,11 +58,15 @@ static bool glowEnabled = DEFAULT_GLOWENABLED;
 static Uint32 videoFlags = SDL_SWSURFACE;
 static bool nodelay = false;
 static SDL_AudioSpec audiospec = {0};
+static int startgame = -1;
 
 static bool showfps = false;
 static int fps = 0;
+static int avgfps = 0;
+static Uint32 fpssum = 0;
 static int framecount = 0;
 static int lastfpstime = 0;
+static int avgcount = -1;
 
 
 typedef struct {
@@ -674,6 +678,9 @@ void md_clearScreen(unsigned char r, unsigned char g, unsigned char b)
 
 void md_initView(int w, int h) 
 {
+    if(!screen)
+        return;
+    
     WINDOW_WIDTH = screen->w;
     WINDOW_HEIGHT = screen->h;
     float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
@@ -781,7 +788,7 @@ void update()
 
     if ((prevKeys[BUTTON_MENU] == 0) && (keys[BUTTON_MENU] == 1))
     {
-        if (!isInMenu)
+        if (!isInMenu && (startgame == -1))
             goToMenu();
         else
             quit = 1;
@@ -826,6 +833,13 @@ void update()
             }
         } 
     }
+    
+    if (showfps && (prevKeys[SDLK_F3] == 0) && (keys[SDLK_F3] == 1))
+    {
+        avgcount = 0;
+        fpssum = 0;
+        avgfps = 0;
+    }
 
     updateFrame();  
     if(!isInMenu && (overlay == 1))
@@ -858,7 +872,7 @@ void update()
     if(showfps)
     {
         char fpsText[10];
-        sprintf(fpsText, "%d", fps);
+        sprintf(fpsText, "%d %d", fps, avgfps);
         int prev = color;
         color = BLACK;
         rect(0,0,strlen(fpsText)*6, 6);
@@ -890,8 +904,10 @@ void printHelp(char* exe)
     printf("  -f: Run fullscreen\n");
     printf("  -ns: No Sound\n");
     printf("  -a: Use hardware (accelerated) surfaces\n");
-    printf("  -fps: Show fps");
-    printf("  -nd: no fps delay (run as fast as possible)");
+    printf("  -fps: Show fps\n");
+    printf("  -nd: no fps delay (run as fast as possible)\n");
+    printf("  -list: List game names to be used with -g option\n");
+    printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
 }
 
 int main(int argc, char **argv)
@@ -933,6 +949,26 @@ int main(int argc, char **argv)
             if(strcasecmp(argv[i], "-h") == 0)
                 if(i+1 < argc)
                     WINDOW_HEIGHT = atoi(argv[i+1]);
+            
+            if(strcasecmp(argv[i], "-g") == 0)
+                if(i+1 < argc)
+                    startgame = i+1;
+            
+            if(strcasecmp(argv[i], "-list") == 0)
+            {
+                initGame();
+                quit = 1;
+                int counter = 0;
+                for (int i = 0; i < gameCount; i++)
+                {
+                    if(getGame(i).update != NULL)
+                    {
+                        counter++;
+                        printf("%d. %s\n", counter, getGame(i).title);
+                    }
+                }
+                return 0;
+            }
 			
 		}
 
@@ -961,6 +997,20 @@ int main(int argc, char **argv)
             }
             initCharacterSprite();
             initGame();
+            if (startgame > 1)
+            {
+                int tmp = startgame;
+                startgame = -1;
+                for (int i = 0; i < gameCount; i++)
+                {
+                    if(strcasecmp(argv[tmp], getGame(i).title) == 0)
+                    {
+                        startgame = i;
+                        restartGame(i);
+                        break;
+                    }
+                }
+            }
             while(quit == 0)
             {
                 frameticks = SDL_GetTicks();
@@ -977,6 +1027,10 @@ int main(int argc, char **argv)
                         if(SDL_GetTicks() - lastfpstime >= 1000)
                         {
                             fps = framecount;
+                            fpssum += fps;
+                            avgcount++;
+                            if(avgcount > 0)
+                                avgfps = fpssum / avgcount;
                             framecount = 0;
                             lastfpstime = SDL_GetTicks();
                         }
