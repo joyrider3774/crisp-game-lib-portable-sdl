@@ -954,7 +954,7 @@ int main(int argc, char **argv)
                 initGame();
                 quit = 1;
                 int counter = 0;
-                for (int i = 0; i < gameCount; i++)
+                for (int i = 1; i < gameCount; i++)
                 {
                     if(getGame(i).update != NULL)
                     {
