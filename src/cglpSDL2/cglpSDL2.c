@@ -28,6 +28,8 @@
 #define DEFAULT_OVERLAY 0
 #define DEFAULT_GLOW_ENABLED false
 
+#define FPS_SAMPLES 10
+
 // Function to normalize angle to the range [0, 2π)
 #define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
 
@@ -64,12 +66,12 @@ static SDL_Texture *viewTexture = NULL;
 static bool nodelay = false;
 static int startgame = -1;
 
+static int fpsSamples[FPS_SAMPLES];
 static bool showfps = false;
 static float avgfps = 0;
-static int fpssum = 0;
 static int framecount = 0;
 static int lastfpstime = 0;
-static int avgcount = 0;
+static int fpsAvgCount = 0;
 
 
 typedef struct {
@@ -834,13 +836,6 @@ void update() {
         }
     }
 
-    if (showfps && (!GameInput->PrevButtons.ButFullscreen) && (GameInput->Buttons.ButFullscreen))
-    {
-        avgcount = 0;
-        fpssum = 0;
-        avgfps = 0;
-    }
-
     updateFrame();
     if(!isInMenu && (overlay == 1))
     {
@@ -1083,14 +1078,16 @@ int main(int argc, char **argv)
                             framecount++;
                             if(SDL_GetTicks() - lastfpstime >= 1000)
                             {
-                                fpssum += framecount;
-                                avgcount++;
-                                avgfps = (float)fpssum / avgcount;
-                                if(avgcount % 5 == 0)
-                                {
-                                    fpssum = 0;
-                                    avgcount = 0;
-                                }
+                                for (int i = FPS_SAMPLES-1; i > 0; i--)
+                                    fpsSamples[i] = fpsSamples[i-1];
+                                fpsSamples[0] = framecount;
+                                fpsAvgCount++;
+                                if(fpsAvgCount > FPS_SAMPLES)
+                                    fpsAvgCount = FPS_SAMPLES;
+                                int fpsSum = 0;
+                                for (int i = 0; i < fpsAvgCount; i++)
+                                    fpsSum += fpsSamples[i];
+                                avgfps = (float)fpsSum / (float)fpsAvgCount;
                                 framecount = 0;
                                 lastfpstime = SDL_GetTicks();
                             }
