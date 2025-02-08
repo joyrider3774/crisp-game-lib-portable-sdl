@@ -38,6 +38,7 @@ void addGameBBlast();
 void addGameBalance();
 void addGameBreedc();
 void addGameCardq();
+void addGameCNodes();
 
 //working inccorectly
 void addGameAccelB();
@@ -91,6 +92,7 @@ void addGames() {
   addGameBalance();
   addGameBreedc();
   addGameCardq();
+  addGameCNodes();
 
   //inccorect
   addGameSection("======BUGGED=====");
