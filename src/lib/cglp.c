@@ -629,7 +629,7 @@ static void initScore(char* gameTitle)
 { 
   score = prevScore = hiScore = 0;
   for (int i = 0; i < gameCount; i++)
-    if(strcasecmp(hiScores[i].title, gameTitle) == 0)
+    if(strcmp(hiScores[i].title, gameTitle) == 0)
     {
       hiScore = hiScores[i].hiScore;
       break;
@@ -1024,7 +1024,7 @@ static void initGameOver() {
         freeIndex = i;
       }
 
-      if (strcasecmp(hiScores[i].title, title) == 0)
+      if (strcmp(hiScores[i].title, title) == 0)
       {
           foundIndex = i;
           break;
