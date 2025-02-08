@@ -116,8 +116,8 @@ static void update() {
         float ta = clamp(wrap(wa + w->width / 2.0f, 0.0f, M_PI * 2.0f), M_PI / 2.0f, (M_PI / 2.0f) * 3.0f);
 
         if (fa < ta) {
-            float fx = sin(fa) * radius * (w->isFloating ? 1.2f : 1.1f);
-            float tx = sin(ta) * radius * (w->isFloating ? 1.2f : 1.1f);
+            float fx = sinf(fa) * radius * (w->isFloating ? 1.2f : 1.1f);
+            float tx = sinf(ta) * radius * (w->isFloating ? 1.2f : 1.1f);
             color = w->isBonus ? YELLOW : PURPLE;
             rect(fx + 50.0f, w->y, tx - fx, -5.0f);
         }
@@ -135,19 +135,19 @@ static void update() {
 
     float a = wrap(player.angle, -M_PI, M_PI);
     if (a > -M_PI / 2.0f && a < M_PI / 2.0f) {
-        rect(50.0f + sin(a) * radius, ho, 1.0f, -100.0f);
+        rect(50.0f + sinf(a) * radius, ho, 1.0f, -100.0f);
     }
     a = wrap(player.angle + M_PI / 2.0f, -M_PI, M_PI);
     if (a > -M_PI / 2.0f && a < M_PI / 2.0f) {
-        rect(50.0f + sin(a) * radius, fmod(ho + 100.0f, 400.0f), 1.0f, -100.0f);
+        rect(50.0f + sinf(a) * radius, fmod(ho + 100.0f, 400.0f), 1.0f, -100.0f);
     }
     a = wrap(player.angle + M_PI, -M_PI, M_PI);
     if (a > -M_PI / 2.0f && a < M_PI / 2.0f) {
-        rect(50.0f + sin(a) * radius, fmod(ho + 200.0f, 400.0f), 1.0f, -100.0f);
+        rect(50.0f + sinf(a) * radius, fmod(ho + 200.0f, 400.0f), 1.0f, -100.0f);
     }
     a = wrap(player.angle + (M_PI / 2.0f) * 3.0f, -M_PI, M_PI);
     if (a > -M_PI / 2.0f && a < M_PI / 2.0f) {
-        rect(50.0f + sin(a) * radius, fmod(ho + 300.0f, 400.0f), 1.0f, -100.0f);
+        rect(50.0f + sinf(a) * radius, fmod(ho + 300.0f, 400.0f), 1.0f, -100.0f);
     }
 
     FOR_EACH(walls, i) {
@@ -160,8 +160,8 @@ static void update() {
             float ta = clamp(wrap(wa + w->width / 2.0f, -M_PI, M_PI), -M_PI / 2.0f, M_PI / 2.0f);
             
             if (fa < ta) {
-                float fx = sin(fa) * radius * 1.2f;
-                float tx = sin(ta) * radius * 1.2f;
+                float fx = sinf(fa) * radius * 1.2f;
+                float tx = sinf(ta) * radius * 1.2f;
                 color = w->isBonus ? LIGHT_YELLOW : LIGHT_PURPLE;
                 float cfx = clamp(fx + 53.0f, 50.0f - radius, 50.0f + radius);
                 float ctx = clamp(tx + 53.0f, 50.0f - radius, 50.0f + radius);
@@ -190,8 +190,8 @@ static void update() {
         float ta = clamp(wrap(wa + w->width / 2.0f, -M_PI, M_PI), -M_PI / 2.0f, M_PI / 2.0f);
 
         if (fa < ta) {
-            float fx = sin(fa) * radius * (w->isFloating ? 1.2f : 1.1f);
-            float tx = sin(ta) * radius * (w->isFloating ? 1.2f : 1.1f);
+            float fx = sinf(fa) * radius * (w->isFloating ? 1.2f : 1.1f);
+            float tx = sinf(ta) * radius * (w->isFloating ? 1.2f : 1.1f);
 
             if (!w->isFloating) {
                 color = LIGHT_PURPLE;
