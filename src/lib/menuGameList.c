@@ -32,6 +32,7 @@ void addGameCatapult();
 void addGameCateP();
 void addGameChargeBeam();
 void addGameCirclew();
+void addGameCounterB();
 
 //working requires mouse 
 void addGameBBlast();
@@ -86,6 +87,7 @@ void addGames() {
   addGameCateP();
   addGameChargeBeam();
   addGameCirclew();
+  addGameCounterB();
 
   addGameSection("======MOUSE======");
   addGameBBlast();
