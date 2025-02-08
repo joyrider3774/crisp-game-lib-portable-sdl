@@ -40,6 +40,7 @@ void addGameBalance();
 void addGameBreedc();
 void addGameCardq();
 void addGameCNodes();
+void addGameCrossLine();
 
 //working inccorectly
 void addGameAccelB();
@@ -95,6 +96,7 @@ void addGames() {
   addGameBreedc();
   addGameCardq();
   addGameCNodes();
+  addGameCrossLine();
 
   //inccorect
   addGameSection("======BUGGED=====");
