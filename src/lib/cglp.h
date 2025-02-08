@@ -16,6 +16,8 @@
 #include "machineDependent.h"
 #include "vector.h"
 
+#define MAX_GAME_COUNT 200
+
 #define FPS 60
 
 #define COLOR_COUNT 15
@@ -58,6 +60,7 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
 /// \endcond
 
 typedef struct {
@@ -102,7 +105,14 @@ typedef struct {
   int rotation;
 } CharacterOptions;
 
+typedef struct {
+    char title[100];
+    int hiScore;
+} GameHiScore;
+
+
 /// \cond
+EXTERNC GameHiScore hiScores[MAX_GAME_COUNT];
 EXTERNC int ticks;
 EXTERNC float score;
 EXTERNC float difficulty;

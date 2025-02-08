@@ -62,6 +62,9 @@ Input currentInput;
 //! Set to `true` when the menu screen is open (readonly).
 bool isInMenu;
 
+GameHiScore hiScores[200];
+
+static int currentGameIndex = 0;
 static int state;
 static bool hasTitle;
 static bool isShowingScore;
@@ -622,7 +625,16 @@ typedef struct {
 static ScoreBoard scoreBoards[MAX_SCORE_BOARD_COUNT];
 static int scoreBoardsIndex;
 
-static void initScore() { score = prevScore = hiScore = 0; }
+static void initScore(char* gameTitle) 
+{ 
+  score = prevScore = hiScore = 0;
+  for (int i = 0; i < gameCount; i++)
+    if(strcasecmp(hiScores[i].title, gameTitle) == 0)
+    {
+      hiScore = hiScores[i].hiScore;
+      break;
+    }
+}
 
 static void initScoreBoards() {
   for (int i = 0; i < MAX_SCORE_BOARD_COUNT; i++) {
@@ -1002,7 +1014,34 @@ static void initGameOver() {
   } else {
     isPlayingBgm = false;
     prevScore = (int)score;
+    char* title = getGame(currentGameIndex).title;
+    int foundIndex = -1;
+    int freeIndex = -1;
+    for (int i = 0; i < gameCount; i++)
+    {
+      if ((strlen(hiScores[i].title) == 0) && (hiScores[i].hiScore == 0) && (freeIndex = -1))
+      {
+        freeIndex = i;
+      }
+
+      if (strcasecmp(hiScores[i].title, title) == 0)
+      {
+          foundIndex = i;
+          break;
+      }
+    }
+
+    int index = foundIndex > -1 ? foundIndex : freeIndex;
+    if(index > -1)
+    {
+      if(prevScore > hiScores[index].hiScore)
+      {
+        strncpy(hiScores[index].title, title, strlen(title));
+        hiScores[index].hiScore = prevScore;
+      }
+    } 
   }
+
   gameOverTicks = 0;
   saveCurrentColorAndCharacterOptions();
   drawGameOver();
@@ -1036,10 +1075,11 @@ static void resetGame(int gameIndex) {
   viewSizeX = options.viewSizeX;
   viewSizeY = options.viewSizeY;
   update = game.update;
+  currentGameIndex = gameIndex;
   md_initView(viewSizeX, viewSizeY);
   initColor();
   initCharacter();
-  initScore();
+  initScore(title);
   initParticle();
   initSound(title, description, options.soundSeed);
   initReplay();
@@ -1074,10 +1114,21 @@ void restartGame(int gameIndex) {
   resetGame(gameIndex);
 }
 
+// Initialize all games highscore table which can be used for saving
+void initHiScores()
+{
+  for (int i = 0; i < MAX_GAME_COUNT; i++)
+  {
+    memset(hiScores[i].title, 0, 100*sizeof(char));
+    hiScores[i].hiScore = 0;
+  }
+}
+
 //! Initialize all games and go to the game selection menu screen.
 //! This function must be called from the machine dependent setup step.
 EMSCRIPTEN_KEEPALIVE
 void initGame() {
+  initHiScores();
   initInput();
   addMenu();
   addGames();

@@ -2,7 +2,7 @@
 
 #include "cglp.h"
 
-#define MAX_GAME_COUNT 200
+
 #define MAX_GAMES_PER_PAGE 15
 #define KEY_REPEAT_DURATION 30
 int gameCount = 0;

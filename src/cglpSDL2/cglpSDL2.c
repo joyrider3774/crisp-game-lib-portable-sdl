@@ -105,6 +105,45 @@ AudioState audio_state = {0};
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
 
+static void loadHighScores()
+{
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/.cglpscore.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    FILE *fp;
+    fp = fopen(fileName, "rb");
+    if(fp)
+    {
+        int i = 0;
+        while (!feof(fp) && (i < gameCount))
+        {
+            fread(hiScores[i].title, sizeof(char), 100, fp);
+            fread(&hiScores[i].hiScore, sizeof(int), 1, fp);
+            i++;
+        }
+        fclose(fp);
+    }
+}
+
+static void saveHighScores()
+{
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/.cglpscore.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    FILE *fp;
+    fp = fopen(fileName, "wb");
+    if(fp)
+    {
+        for (int i = 0; i < gameCount; i++)
+        {
+            if(strlen(hiScores[i].title) > 0)
+            {                
+                fwrite(hiScores[i].title, sizeof(char), 100, fp);
+                fwrite(&hiScores[i].hiScore, sizeof(int), 1, fp);
+            }
+        }
+        fclose(fp);
+    }
+}
+
 static GlowDistanceTable* createDistanceTable(int glowSize) {
     GlowDistanceTable* table = (GlowDistanceTable*)SDL_malloc(sizeof(GlowDistanceTable));
     if (!table) return NULL;
@@ -1051,6 +1090,7 @@ int main(int argc, char **argv)
                         }
                     }
                 }
+                loadHighScores();
                 GameInput = CInput_Create();
                 int skip = 10;
                 while(quit == 0)
@@ -1097,6 +1137,7 @@ int main(int argc, char **argv)
                 CInput_Destroy(GameInput);
                 resetCharacterSprite();
                 SDL_DestroyRenderer(Renderer);
+                saveHighScores();
             }
             else
             {
