@@ -9,13 +9,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - { runson: 'windows-latest',   sys: 'mingw64', env: 'x86_64', name: 'Cglpsdl2', bin_suffix: '.exe'}
-          - { runson: 'windows-latest',   sys: 'mingw32', env: 'i686',   name: 'Cglpsdl2', bin_suffix: '.exe'}
-          - { runson: 'ubuntu-24.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
-          - { runson: 'ubuntu-22.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
-          - { runson: 'ubuntu-20.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
-          - { runson: 'ubuntu-24.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', bin_suffix: ''}
-          - { runson: 'ubuntu-22.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', bin_suffix: ''}
+          - { runson: 'windows-latest',   sys: 'mingw64', env: 'x86_64', name: 'Cglpsdl2', binsuffix: '.exe'}
+          - { runson: 'windows-latest',   sys: 'mingw32', env: 'i686',   name: 'Cglpsdl2', binsuffix: '.exe'}
+          - { runson: 'ubuntu-24.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
+          - { runson: 'ubuntu-20.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
+          - { runson: 'ubuntu-24.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', binsuffix: ''}
 
 
     runs-on: ${{matrix.runson}}
@@ -43,18 +43,18 @@ jobs:
         name: Build Game Windows
         shell: msys2 {0}
         run: |
-          make -f ./src/cglpSDL2/Makefile "STATIC_LIBS=1" "EXE=\"${{matrix.name}}${{matrix.bin_suffix}}\"" "PREFIX=/${{matrix.sys}}"
+          make -f ./src/cglpSDL2/Makefile "STATIC_LIBS=1" "EXE=\"${{matrix.name}}${{matrix.binsuffix}}\"" "PREFIX=/${{matrix.sys}}"
       
       - if: ${{ matrix.buildtype != 'windows-latest'}}
         name: Build Game Other
         run: |
-          make -f ./src/cglpSDL2/Makefile "STATIC_LIBS=1" "EXE=\"${{matrix.name}}${{matrix.bin_suffix}}\"" "PREFIX=/${{matrix.sys}}"
+          make -f ./src/cglpSDL2/Makefile "STATIC_LIBS=1" "EXE=\"${{matrix.name}}${{matrix.binsuffix}}\"" "PREFIX=/${{matrix.sys}}"
 
       - name: Copy Game And Assets
         run: |
           mkdir ./Release
           mkdir "./Release/${{matrix.name}}"
-          cp "${{matrix.name}}${{matrix.bin_suffix}" "./Release/${{matrix.name}}/"
+          cp "${{matrix.name}}${{matrix.binsuffix}" "./Release/${{matrix.name}}/"
           cp ./README.md "./Release/${{matrix.name}}/"
           cp ./LICENSE.txt "./Release/${{matrix.name}}/"
          
