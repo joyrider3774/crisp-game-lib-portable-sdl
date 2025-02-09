@@ -54,7 +54,7 @@ jobs:
         run: |
           mkdir ./Release
           mkdir "./Release/${{matrix.name}}"
-          cp "${{matrix.name}}${{matrix.binsuffix}" "./Release/${{matrix.name}}/"
+          cp "${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
           cp ./README.md "./Release/${{matrix.name}}/"
           cp ./LICENSE.txt "./Release/${{matrix.name}}/"
          
