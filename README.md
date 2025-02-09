@@ -14,6 +14,9 @@ see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Extra added games
 - Sections inside the menu's
 - Ability to have more than 16 games in the menu
+- Ability to switch between dark color mode enabled or not
+- Overlays like small glow effects, pixel grid or crt effect saved per game
+- HiScore saving
 - Funkey version is based on this version
   
 see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL2) for SDL 2 Port
@@ -22,13 +25,17 @@ see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Extra added games
 - Sections inside the menu's
 - Ability to have more than 16 games in the menu
+- Ability to switch between dark color mode enabled or not
+- Ability to switch between dark color mode enabled or not
+- Overlays like small glow effects, pixel grid or crt effect saved per game
+- HiScore saving
 - Works on many chinese emulation handhelds if you crosscompile (rg35xx sp, rg35xx plus, trimui smart pro, rgb30, ..)
 
 **Windows versions of the SDL2 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
 
 Controls:
-- Keyboard Controls: X, C, ESC, PageUp, PageDown and arrow keys
-- Game Pad (XBox) Controls: A, B, Back, LB, RB and Joystick or dpad
+- Keyboard Controls: X, C, S, D, G, ESC, PageUp, PageDown and arrow keys
+- Game Pad (XBox) Controls: A, B, X, Y, Start, Back, LB, RB and Joystick or dpad
 
 Commandline parameters:
 - -f: Run fullscreen windowed (desktop resolution)
