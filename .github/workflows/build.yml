@@ -9,16 +9,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - { runson: windows-latest,   shell: msys2 {0}, sys: mingw64,       env: x86_64, name: Cglpsdl2, bin_suffix: .exe}
-          - { runson: windows-latest,   shell: msys2 {0}, sys: mingw32,       env: i686,   name: Cglpsdl2, bin_suffix: .exe}
-          - { runson: ubuntu-24.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
-          - { runson: ubuntu-22.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
-          - { runson: ubuntu-20.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
-          - { runson: ubuntu-24.04-arm, shell: sh,        sys: usr,  env: arm64,  name: Cglpsdl2, bin_suffix: }
-          - { runson: ubuntu-22.04-arm, shell: sh,        sys: usr,  env: arm64,  name: Cglpsdl2, bin_suffix: }
-          #- { runson: macos-13,         shell: sh,        sys: ubuntu-20.04,  env: intel,  name: Cglpsdl2, bin_suffix: }
-          #- { runson: macos-14,         shell: sh,        sys: ubuntu-20.04,  env: arm64,  name: Cglpsdl2, bin_suffix: }
-          #- { runson: macos-15,         shell: sh,        sys: ubuntu-20.04,  env: arm64,  name: Cglpsdl2, bin_suffix: }
+          - { runson: 'windows-latest',   shell: 'msys2 {0}', sys: 'mingw64', env: 'x86_64', name: 'Cglpsdl2', bin_suffix: '.exe'}
+          - { runson: 'windows-latest',   shell: 'msys2 {0}', sys: 'mingw32', env: 'i686',   name: 'Cglpsdl2', bin_suffix: '.exe'}
+          - { runson: 'ubuntu-24.04',     shell: 'sh',        sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
+          - { runson: 'ubuntu-22.04',     shell: 'sh',        sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
+          - { runson: 'ubuntu-20.04',     shell: 'sh',        sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', bin_suffix: ''}
+          - { runson: 'ubuntu-24.04-arm', shell: 'sh',        sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', bin_suffix: ''}
+          - { runson: 'ubuntu-22.04-arm', shell: 'sh',        sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', bin_suffix: ''}
+
 
     runs-on: ${{matrix.runson}}
     steps:
