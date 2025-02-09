@@ -901,7 +901,7 @@ void md_drawRect(float x, float y, float w, float h, unsigned char r,
     };
 
     // Apply glow first
-    if(glowEnabled && !isInMenu)
+    if(glowEnabled && !isInMenu && !isInGameOver)
         applyGlowToRect(view, rect, glowSize >> 1, DEFAULT_GLOW_INTENSITY, r, g, b);
 
     // Draw the main rectangle
