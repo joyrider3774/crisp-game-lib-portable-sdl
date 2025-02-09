@@ -123,6 +123,10 @@ void CInput_HandleKeyboardEvent(CInput *Input, int Key, bool Value)
 			break;
 		case BUTTON_GLOWSWITCH:
 			Input->Buttons.ButX = Value;
+			break;
+		case BUTTON_DARKSWITCH:
+			Input->Buttons.ButStart = Value;
+			break;
 		default:
 			break;
 	}
