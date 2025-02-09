@@ -37,6 +37,7 @@ jobs:
       - if: ${{ matrix.runson != 'windows-latest'}}
         name: install libsdl2-dev
         run: |
+          sudo apt update
           sudo apt-get install -y libsdl2-dev
         
       - if: ${{ matrix.runson == 'windows-latest'}}
