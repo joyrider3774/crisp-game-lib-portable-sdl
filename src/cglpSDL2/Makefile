@@ -2,6 +2,7 @@ DEBUG = 0
 SRC_DIR = ./src/cglpSDL2  
 LIB_DIR = ./src/lib
 GME_DIR = ./src/games
+STATIC_LIBS = 0
 
 OBJ_DIR = obj
 EXE=cglpsdl2
@@ -21,7 +22,12 @@ SDL_CONFIG = sdl2-config
 CC = gcc
 CFLAGS ?= -Wall -Wextra `$(SDL_CONFIG) --cflags`
 LDFLAGS ?=
-LDLIBS ?= `$(SDL_CONFIG) --libs` -lm 
+ifeq ($(STATIC_LIBS),1)
+LDLIBS ?= `$(SDL_CONFIG) --static-libs`
+else
+LDLIBS ?= `$(SDL_CONFIG) --libs` 
+endif
+LDLIBS += -lm 
 
 ifeq ($(DEBUG),0)
 OPT_LEVEL ?= -O2
