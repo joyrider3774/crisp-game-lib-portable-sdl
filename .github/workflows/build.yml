@@ -1,0 +1,63 @@
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually target the Actions tab
+  workflow_dispatch:
+
+name: Build
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - { runson: windows-latest,   shell: msys2 {0}, sys: mingw64,       env: x86_64, name: Cglpsdl2, bin_suffix: .exe}
+          - { runson: windows-latest,   shell: msys2 {0}, sys: mingw32,       env: i686,   name: Cglpsdl2, bin_suffix: .exe}
+          - { runson: ubuntu-24.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
+          - { runson: ubuntu-22.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
+          - { runson: ubuntu-20.04,     shell: sh,        sys: usr,  env: x64,    name: Cglpsdl2, bin_suffix: }
+          - { runson: ubuntu-24.04-arm, shell: sh,        sys: usr,  env: arm64,  name: Cglpsdl2, bin_suffix: }
+          - { runson: ubuntu-22.04-arm, shell: sh,        sys: usr,  env: arm64,  name: Cglpsdl2, bin_suffix: }
+          #- { runson: macos-13,         shell: sh,        sys: ubuntu-20.04,  env: intel,  name: Cglpsdl2, bin_suffix: }
+          #- { runson: macos-14,         shell: sh,        sys: ubuntu-20.04,  env: arm64,  name: Cglpsdl2, bin_suffix: }
+          #- { runson: macos-15,         shell: sh,        sys: ubuntu-20.04,  env: arm64,  name: Cglpsdl2, bin_suffix: }
+
+    runs-on: ${{matrix.runson}}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - if: ${{ matrix.buildtype == 'windows-latest'}}
+        name: Setup Msys
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.sys}}
+          install: >-
+            base-devel
+            mingw-w64-${{matrix.env}}-gcc
+            mingw-w64-${{matrix.env}}-SDL2             
+            mingw-w64-${{matrix.env}}-make
+
+      - if: ${{ matrix.buildtype != 'windows-latest'}}
+        name: install libsdl2-dev
+        shell: ${{matrix.shell}}
+        run: |
+          sudo apt-get install -y libsdl2-dev
+        
+      - name: Build Game
+        shell: ${{matrix.shell}}
+        run: |
+          make -f ./src/cglpSDL2/Makefile "STATIC_LIBS=1" "EXE=\"${{matrix.name}}${{matrix.bin_suffix}}\"" "PREFIX=/${{matrix.sys}}"
+
+      - name: Copy Game And Assets
+        shell: ${{matrix.shell}}
+        run: |
+          mkdir ./Release
+          mkdir "./Release/${{matrix.name}}"
+          cp "${{matrix.name}}${{matrix.bin_suffix}" "./Release/${{matrix.name}}/"
+          cp ./README.md "./Release/${{matrix.name}}/"
+          cp ./LICENSE.txt "./Release/${{matrix.name}}/"
+         
+      - name: Store build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{matrix.name}}-${{matrix.runson}}_${{ matrix.env }}
+          path: ./Release/
