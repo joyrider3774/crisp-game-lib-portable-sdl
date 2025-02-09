@@ -9,15 +9,6 @@
 
 #include "cglp.h"
 
-typedef struct {
-  char *title;
-  char *description;
-  char (*characters)[CHARACTER_WIDTH][CHARACTER_HEIGHT + 1];
-  int charactersCount;
-  Options options;
-  void (*update)(void);
-} Game;
-
 EXTERNC int gameCount;
 EXTERNC void addGame(char *title, char *description,
                      char (*characters)[CHARACTER_WIDTH][CHARACTER_HEIGHT + 1],

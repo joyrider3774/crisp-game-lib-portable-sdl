@@ -110,8 +110,19 @@ typedef struct {
     int hiScore;
 } GameHiScore;
 
+typedef struct {
+  char *title;
+  char *description;
+  char (*characters)[CHARACTER_WIDTH][CHARACTER_HEIGHT + 1];
+  int charactersCount;
+  Options options;
+  void (*update)(void);
+} Game;
 
 /// \cond
+
+EXTERNC int currentGameIndex;
+EXTERNC void (*onResetGame)(Game *game);
 EXTERNC GameHiScore hiScores[MAX_GAME_COUNT];
 EXTERNC int ticks;
 EXTERNC float score;
@@ -125,6 +136,7 @@ EXTERNC float tempo;
 EXTERNC Input input;
 EXTERNC Input currentInput;
 EXTERNC bool isInMenu;
+EXTERNC bool isInGameOver;
 EXTERNC Collision rect(float x, float y, float w, float h);
 EXTERNC Collision box(float x, float y, float w, float h);
 EXTERNC Collision line(float x1, float y1, float x2, float y2);

@@ -73,6 +73,7 @@ static int framecount = 0;
 static int lastfpstime = 0;
 static int fpsAvgCount = 0;
 
+static Uint32 lastCrtTime = 0;
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -98,12 +99,230 @@ typedef struct {
     int size;         // Size of the table (glowSize * 2 + 1)
 } GlowDistanceTable;
 
+typedef struct {
+    SDL_Surface* scanlineSurface;
+    int screenHeight;
+    int screenWidth;
+    int screenOffsetX;
+    int screenOffsetY;
+    float scrollOffset;
+    int scanlineSpacing;
+    float scanlineFps;
+} CRTEffect;
+
+typedef struct {
+    char title[100];
+    int overlay;
+    bool glowEnabled;
+    bool isDarkColor;
+} gameOverlay;
+
+gameOverlay gameOverLays[MAX_GAME_COUNT];
+
+CRTEffect* crtEffect = NULL;
+
 static GlowDistanceTable* distanceTable = NULL;
 
 AudioState audio_state = {0};
 
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
+
+void resetGame(Game *game)
+{
+    if((strlen(game->title) == 0) || (game->update == NULL) )
+        return;
+
+    int freeIndex = -1;
+    for (int i = 0; i < gameCount; i++)
+    {
+        if((freeIndex == -1) && (strlen(gameOverLays[i].title) == 0))
+            freeIndex = i;
+
+        if ((strlen(gameOverLays[i].title) > 0) && (strcmp(game->title, gameOverLays[i].title) == 0 ))
+        {
+            overlay = gameOverLays[i].overlay;
+            glowEnabled = gameOverLays[i].glowEnabled;
+            game->options.isDarkColor = gameOverLays[i].isDarkColor;
+            return;
+        }
+    } 
+
+    //no match found add new game
+    if(freeIndex > -1)
+    {
+        gameOverLays[freeIndex].overlay = overlay = 0;
+        gameOverLays[freeIndex].glowEnabled = glowEnabled = false;
+        memset(gameOverLays[freeIndex].title, 0, 100*sizeof(char));
+        strcpy(gameOverLays[freeIndex].title, game->title);
+        gameOverLays[freeIndex].isDarkColor = game->options.isDarkColor;
+    }
+
+}
+
+CRTEffect* CreateCRTEffect(int screenWidth, int screenHeight, int screenOffsetX, int screenOffsetY,
+    int scanlineSpacing, int scanelineThickness, float scanlineFps, 
+    Uint8 scanlineR, Uint8 scanlineG, Uint8 scanlineB, Uint8 scanlineA) {
+    
+    CRTEffect* effect = (CRTEffect*)SDL_malloc(sizeof(CRTEffect));
+    if (!effect) return NULL;
+
+    effect->screenHeight = screenHeight;
+    effect->screenWidth = screenWidth;
+    effect->screenOffsetX = screenOffsetX;
+    effect->screenOffsetY = screenOffsetY;
+    effect->scrollOffset = 0.0f;
+    effect->scanlineSpacing = scanlineSpacing;
+    effect->scanlineFps = scanlineFps;
+
+    // Create main surface directly in screen format
+    effect->scanlineSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 
+        screenWidth, screenHeight, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+
+    if (!effect->scanlineSurface) {
+        SDL_free(effect);
+        return NULL;
+    }
+
+    // Set the alpha blend mode
+    if (SDL_SetSurfaceBlendMode(effect->scanlineSurface, SDL_BLENDMODE_BLEND) != 0) 
+    {
+        SDL_FreeSurface(effect->scanlineSurface);
+        SDL_free(effect);
+        return NULL;
+    }
+
+    // Clear to transparent
+    SDL_FillRect(effect->scanlineSurface, NULL, SDL_MapRGBA(effect->scanlineSurface->format, 0, 0, 0, 0));
+
+    // Draw the scanlines
+    SDL_Rect lineRect = {0, 0, screenWidth, scanelineThickness};
+    Uint32 lineColor = SDL_MapRGBA(effect->scanlineSurface->format, scanlineR, scanlineG, scanlineB, scanlineA);
+
+    for (int y = 0; y < screenHeight; y += scanlineSpacing) {
+        lineRect.y = y;
+        SDL_FillRect(effect->scanlineSurface, &lineRect, lineColor);
+    }
+
+    return effect;
+}
+
+void UpdateCRTEffect(CRTEffect* effect, float deltaTime)
+{
+    if (!effect) return;
+
+    effect->scrollOffset += effect->scanlineFps * deltaTime;
+    
+    if (effect->scrollOffset >= effect->scanlineSpacing) {
+        effect->scrollOffset = 0.0f;
+    }
+}
+
+void RenderCRTEffect(SDL_Surface* screenSurface, CRTEffect* effect)
+{
+    if (!effect || !screenSurface) return;
+
+    int offsetY = (int)effect->scrollOffset;
+    
+    // First part: from offset to end of screen
+    SDL_Rect srcRect1 = {
+        0,
+        offsetY,
+        effect->screenWidth,
+        effect->screenHeight - offsetY
+    };
+    
+    SDL_Rect dstRect1 = {
+        effect->screenOffsetX,
+        effect->screenOffsetY,
+        effect->screenWidth,
+        effect->screenHeight - offsetY
+    };
+
+    SDL_BlitSurface(effect->scanlineSurface, &srcRect1, screenSurface, &dstRect1);
+    
+    // Second part: wrap around from top of texture
+    if (offsetY > 0) {
+        SDL_Rect srcRect2 = {
+            0,
+            0,
+            effect->screenWidth,
+            offsetY
+        };
+        
+        SDL_Rect dstRect2 = {
+            effect->screenOffsetX,
+            effect->screenOffsetY + effect->screenHeight - offsetY,
+            effect->screenWidth,
+            offsetY
+        };
+
+        SDL_BlitSurface(effect->scanlineSurface, &srcRect2, screenSurface, &dstRect2);
+    }
+}
+
+void DestroyCRTEffect(CRTEffect* effect)
+{
+    if (!effect) return;
+    
+    if (effect->scanlineSurface) {
+        SDL_FreeSurface(effect->scanlineSurface);
+    }
+    SDL_free(effect);
+}
+
+static void loadGameOverlays()
+{
+    //initialize
+    for (int i = 0; i < gameCount; i++)
+    {
+        memset(gameOverLays[i].title, 0, 100 * sizeof(char));
+        gameOverLays[i].overlay = 0;
+        gameOverLays[i].glowEnabled = false;
+        gameOverLays[i].isDarkColor = false;
+    }
+    onResetGame = resetGame;
+    //load
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/.cglpoverlays.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    FILE *fp;
+    fp = fopen(fileName, "rb");
+    if(fp)
+    {
+        int i = 0;
+        while (!feof(fp) && (i < gameCount))
+        {
+            fread(gameOverLays[i].title, sizeof(char), 100, fp);
+            fread(&gameOverLays[i].overlay, sizeof(int), 1, fp);
+            fread(&gameOverLays[i].glowEnabled, sizeof(bool), 1, fp);
+            fread(&gameOverLays[i].isDarkColor, sizeof(bool), 1, fp);
+            i++;
+        }
+        fclose(fp);
+    }
+}
+
+static void saveGameOverlays()
+{
+    char fileName[FILENAME_MAX];
+    sprintf(fileName,"%s/.cglpoverlays.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    FILE *fp;
+    fp = fopen(fileName, "wb");
+    if(fp)
+    {
+        for (int i = 0; i < gameCount; i++)
+        {
+            if(strlen(gameOverLays[i].title) > 0)
+            {
+                fwrite(gameOverLays[i].title, sizeof(char), 100, fp);
+                fwrite(&gameOverLays[i].overlay, sizeof(int), 1, fp);
+                fwrite(&gameOverLays[i].glowEnabled, sizeof(bool), 1, fp);
+                fwrite(&gameOverLays[i].isDarkColor, sizeof(bool), 1, fp);
+            }
+        }
+        fclose(fp);
+    }
+}
 
 static void loadHighScores()
 {
@@ -567,6 +786,7 @@ void applyGlowToCharacterPixel(SDL_Surface* surface, int centerX, int centerY,
 
     SDL_UnlockSurface(surface);
 }
+
 SDL_Surface* createCharacterSurface(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
                                   float scale, int glowRadius, Uint8 glowAlpha,
                                   bool withGlow) {
@@ -692,7 +912,7 @@ void md_drawRect(float x, float y, float w, float h, unsigned char r,
     };
 
     // Apply glow first
-    if(glowEnabled && !isInMenu)
+    if(glowEnabled && !isInMenu && !isInGameOver)
         applyGlowToRect(view, rect, glowSize >> 1, DEFAULT_GLOW_INTENSITY, r, g, b);
 
     // Draw the main rectangle
@@ -784,12 +1004,21 @@ void md_initView(int w, int h)
     
     // Create new surface
     view = SDL_CreateRGBSurfaceWithFormat(0, viewW, viewH, 32, SDL_PIXELFORMAT_RGBA8888);
-    if (view) {
+    if (view) 
+    {
         // Create texture from surface
         viewTexture = SDL_CreateTexture(Renderer, 
                                       SDL_PIXELFORMAT_RGBA8888,
                                       SDL_TEXTUREACCESS_STREAMING,
                                       viewW, viewH);
+        if(crtEffect)
+        {
+            DestroyCRTEffect(crtEffect);
+            crtEffect = NULL;
+        }
+        Game g = getGame(currentGameIndex);
+        crtEffect = CreateCRTEffect(viewW, viewH, 0, 0, 6*wscale, 3*wscale, 10, 
+            g.options.isDarkColor ? 40 : 128 , g.options.isDarkColor ? 40 : 128 , g.options.isDarkColor ? 40 : 128, g.options.isDarkColor ? 55 : 45);
     }
     resetCharacterSprite();
 }
@@ -812,7 +1041,7 @@ void update() {
     float mouseX = ((GameInput->Buttons.MouseX - offsetX) / scale);
     float mouseY = ((GameInput->Buttons.MouseY - offsetY) / scale);
     setMousePos(mouseX, mouseY);
-    
+
     if ((!GameInput->PrevButtons.ButBack) && (GameInput->Buttons.ButBack))
     {
         if (!isInMenu && (startgame == -1))
@@ -845,32 +1074,61 @@ void update() {
 
     if ((!GameInput->PrevButtons.ButX) && (GameInput->Buttons.ButX))
     {
-        if (overlay == 0)
+        if(!isInMenu)
         {
-            if(glowEnabled)
+            if (overlay == 0)
             {
-                glowEnabled = false;
-                resetCharacterSprite();
+                if(glowEnabled)
+                {
+                    glowEnabled = false;
+                    resetCharacterSprite();
+                }
+                else
+                {
+                    overlay = 1;
+                    glowEnabled = true;
+                    resetCharacterSprite();
+                }
             }
-            else
+            else 
             {
-                overlay = 1;
-                glowEnabled = true;
-                resetCharacterSprite();
+                if(overlay == 1)
+                {
+                    if(glowEnabled)
+                    {
+                        glowEnabled = false;
+                        resetCharacterSprite();
+                    }
+                    else
+                    {
+                        overlay = 2;
+                        glowEnabled = false;
+                        resetCharacterSprite();                    
+                    }
+                }
+                else
+                {
+                    if (overlay == 2)
+                    {
+                        glowEnabled = true;
+                        resetCharacterSprite();
+                        overlay = 0;
+                        
+                    }
+                }
             }
-        }
-        else
-        {
-            if(glowEnabled)
-            {
-                glowEnabled = false;
-                resetCharacterSprite();
-            }
-            else
-            {
-                overlay = 0;
-                glowEnabled = true;
-                resetCharacterSprite();
+            //remember
+            Game g = getGame(currentGameIndex);
+            if((strlen(g.title) > 0) && (g.update != NULL))
+            {         
+                for (int i = 0; i < gameCount; i++)
+                {
+                    if (strcmp(g.title, gameOverLays[i].title) == 0 )
+                    {
+                        gameOverLays[i].overlay = overlay;
+                        gameOverLays[i].glowEnabled = glowEnabled;
+                    }
+                }
             }
         }
     }
@@ -916,6 +1174,15 @@ void update() {
     }
     // Update texture from surface
     if (view && viewTexture) {
+        
+        Uint32 currentCrtTime = SDL_GetTicks();
+        float deltaTime = (currentCrtTime - lastCrtTime) / 1000.0f;
+        lastCrtTime = currentCrtTime;
+        if(!isInGameOver && (overlay == 2) && !isInMenu)
+        {
+            UpdateCRTEffect(crtEffect, deltaTime);
+            RenderCRTEffect(view, crtEffect);
+        }
         SDL_UpdateTexture(viewTexture, NULL, view->pixels, view->pitch);
         
         // Clear renderer
@@ -928,6 +1195,25 @@ void update() {
 
         // Present the renderer
         SDL_RenderPresent(Renderer);
+    }
+    if ((!GameInput->PrevButtons.ButStart) && (GameInput->Buttons.ButStart))
+    {
+        if(!isInMenu)
+        {
+            Game g = getGame(currentGameIndex);
+            if((strlen(g.title) > 0) && (g.update != NULL))
+            {         
+                for (int i = 0; i < gameCount; i++)
+                {
+                    if (strcmp(g.title, gameOverLays[i].title) == 0 )
+                    {
+                        gameOverLays[i].isDarkColor = !gameOverLays[i].isDarkColor;
+                        restartGame(currentGameIndex);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1045,7 +1331,7 @@ int main(int argc, char **argv)
                 SDL_RendererInfo rendererInfo;
                 SDL_GetRendererInfo(Renderer, &rendererInfo);
                 SDL_Log("Using Renderer:%s\n", rendererInfo.name);
-                SDL_Log("Succesfully Created Buffer\n");      
+                SDL_Log("Succesfully Created Buffer\n");
                 initCharacterSprite();
                 initGame();
                 if(makescreenshots)
@@ -1091,6 +1377,7 @@ int main(int argc, char **argv)
                     }
                 }
                 loadHighScores();
+                loadGameOverlays();
                 GameInput = CInput_Create();
                 int skip = 10;
                 while(quit == 0)
@@ -1136,8 +1423,11 @@ int main(int argc, char **argv)
                 }           
                 CInput_Destroy(GameInput);
                 resetCharacterSprite();
+                if(crtEffect)
+                    DestroyCRTEffect(crtEffect);
                 SDL_DestroyRenderer(Renderer);
                 saveHighScores();
+                saveGameOverlays();
             }
             else
             {

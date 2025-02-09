@@ -61,10 +61,14 @@ Input input;
 Input currentInput;
 //! Set to `true` when the menu screen is open (readonly).
 bool isInMenu;
+//! Set to `true` when in the gameover pause state (readonly).
+bool isInGameOver;
+//! current game index (readonly)
+int currentGameIndex = 0;
 
-GameHiScore hiScores[200];
+GameHiScore hiScores[MAX_GAME_COUNT];
 
-static int currentGameIndex = 0;
+
 static int state;
 static bool hasTitle;
 static bool isShowingScore;
@@ -77,6 +81,7 @@ static char (*characters)[CHARACTER_HEIGHT][CHARACTER_WIDTH + 1];
 static int charactersCount;
 static Options options;
 static void (*update)(void);
+void (*onResetGame)(Game *game) = NULL;
 
 // Collision
 /// \cond
@@ -1049,14 +1054,17 @@ static void initGameOver() {
 }
 
 static void updateGameOver() {
+  isInGameOver = true;
   if (gameOverTicks == 20) {
-    saveCurrentColorAndCharacterOptions();
-    drawGameOver();
-    loadCurrentColorAndCharacterOptions();
+    // saveCurrentColorAndCharacterOptions();
+    // drawGameOver();    
+    // loadCurrentColorAndCharacterOptions();
   }
   if (gameOverTicks > 20 && currentInput.isJustPressed) {
+    isInGameOver = false;
     initInGame();
   } else if (hasTitle && gameOverTicks > 120) {
+    isInGameOver = false;
     initTitle();
   }
   gameOverTicks++;
@@ -1066,7 +1074,10 @@ static void updateGameOver() {
 void gameOver() { initGameOver(); }
 
 static void resetGame(int gameIndex) {
+  currentGameIndex = gameIndex;
   Game game = getGame(gameIndex);
+  if (onResetGame)
+    onResetGame(&game);
   title = game.title;
   description = game.description;
   characters = game.characters;
@@ -1075,7 +1086,6 @@ static void resetGame(int gameIndex) {
   viewSizeX = options.viewSizeX;
   viewSizeY = options.viewSizeY;
   update = game.update;
-  currentGameIndex = gameIndex;
   md_initView(viewSizeX, viewSizeY);
   initColor();
   initCharacter();
@@ -1102,6 +1112,7 @@ void goToMenu() {
   isShowingScore = false;
   isBgmEnabled = false;
   isInMenu = true;
+  isInGameOver = false;
   resetGame(0);
 }
 
