@@ -29,6 +29,7 @@ endif()
 
 add_executable(CglpSDL2)
 target_sources(${PROJECT_NAME} PRIVATE ${SRC} )
+target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/src/lib" "${PROJECT_SOURCE_DIR}/src/games" "${PROJECT_SOURCE_DIR}/src/cglpSDL2")
 if (! ${MACOSX})
 target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc)
 endif()
