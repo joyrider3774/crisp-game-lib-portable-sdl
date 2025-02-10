@@ -16,6 +16,7 @@ jobs:
           - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
