@@ -13,10 +13,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: windows-latest, env: Windows x86_64, triplet: x64-windows-static, binary: Release/retrotime.exe, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
-          - { os: macos-13, env: Mac Os x64, triplet: x64-osx, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
-          - { os: macos-latest, env: Mac Os arm64, triplet: arm64-osx, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
-          - { os: ubuntu-20.04, env: Ubuntu x86_64, triplet: x64-linux, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
+          - { os: windows-latest, env: Windows x86_64, triplet: x64-windows-static, binary: Release/CglpSDL2.exe, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
+          - { os: macos-13, env: Mac Os x64, triplet: x64-osx, binary: Release/CglpSDL2, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
+          - { os: macos-latest, env: Mac Os arm64, triplet: arm64-osx, binary: Release/CglpSDL2, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
+          - { os: ubuntu-20.04, env: Ubuntu x86_64, triplet: x64-linux, binary: Release/CglpSDL2, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
     runs-on: ${{ matrix.os }} 
     env:
       VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
@@ -56,25 +56,24 @@ jobs:
       - name: Copy Game And Assets
         run: |
           mkdir ./Release
-          mkdir ./Release/RetroTime
-          cp builds/ninja-multi-vcpkg/${{ matrix.binary }} ./Release/RetroTime/
-          cp -R ./retrotimefs ./Release/RetroTime/
-          cp ./README.md ./Release/RetroTime/
-          cp ./LICENSE ./Release/RetroTime/
+          mkdir "./Release/CglpSDL2"
+          cp builds/ninja-multi-vcpkg/${{ matrix.binary }} ./Release/CglpSDL2/
+          cp ./README.md "./Release/CglpSDL2/"
+          cp ./LICENSE.txt "./Release/CglpSDL2/"
       - name: Tar Gzip everything
         if: runner.os != 'Windows'
         run : |
           cd Release
-          tar -czvf "../RetroTime ${{ matrix.env }}.tar.gz" RetroTime
+          tar -czvf "../CglpSDL2 ${{ matrix.env }}.tar.gz" CglpSDL2
       - name: Store build
         uses: actions/upload-artifact@v4
         if: runner.os != 'Windows'
         with:
-          name: RetroTime ${{ matrix.env }}
-          path: ./RetroTime ${{ matrix.env }}.tar.gz
+          name: CglpSDL2 ${{ matrix.env }}
+          path: ./CglpSDL2 ${{ matrix.env }}.tar.gz
       - name: Store build
         uses: actions/upload-artifact@v4
         if: runner.os == 'Windows'
         with:
-          name: RetroTime ${{ matrix.env }}
+          name: CglpSDL2 ${{ matrix.env }}
           path: ./Release/
