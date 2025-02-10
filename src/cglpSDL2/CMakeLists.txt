@@ -27,8 +27,12 @@ file(GLOB SRC CONFIGURE_DEPENDS
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 set(BUILD_SHARED_LIBS OFF)
-if (! ${MACOSX})
-set(CMAKE_EXE_LINKER_FLAGS "-static")
+if (!(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+	set(CMAKE_EXE_LINKER_FLAGS "-static")
+endif()
+
+if (WIN32)
+set(CMAKE_EXE_LINKER_FLAGS "-mwindows")
 endif()
 
 add_executable(CglpSDL2)
