@@ -22,12 +22,14 @@ SDL_CONFIG = sdl2-config
 CC = gcc
 CFLAGS ?= -Wall -Wextra `$(SDL_CONFIG) --cflags`
 LDFLAGS ?=
+LDLIBS ?=
 ifeq ($(STATIC_LIBS),1)
-LDLIBS ?= `$(SDL_CONFIG) --static-libs`
+LDFLAGS += -static
+LDLIBS += `$(SDL_CONFIG) --static-libs`
 else
-LDLIBS ?= `$(SDL_CONFIG) --libs` 
+LDLIBS += `$(SDL_CONFIG) --libs` 
 endif
-LDLIBS += -lm 
+LDLIBS += -lm
 
 ifeq ($(DEBUG),0)
 OPT_LEVEL ?= -O2
