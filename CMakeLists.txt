@@ -8,16 +8,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 endif()
 
-project(CglpSDL2 C LINKER_LANGUAGE C)
+project(CglpSDL2 LANGUAGES C)
 
 find_package(SDL2 CONFIG REQUIRED)
 
 file(GLOB SRC CONFIGURE_DEPENDS
-        "${PROJECT_SOURCE_DIR}/src/cglpSDL2"
+        "${PROJECT_SOURCE_DIR}/src/cglpSDL2/*.c"
         "${PROJECT_SOURCE_DIR}/src/cglpSDL2/*.h"
-        "${PROJECT_SOURCE_DIR}/src/games/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/games/*.c"
         "${PROJECT_SOURCE_DIR}/src/games/*.h"
-		"${PROJECT_SOURCE_DIR}/src/lib/*.cpp"
+		"${PROJECT_SOURCE_DIR}/src/lib/*.c"
         "${PROJECT_SOURCE_DIR}/src/lib/*.h"
         )
 
