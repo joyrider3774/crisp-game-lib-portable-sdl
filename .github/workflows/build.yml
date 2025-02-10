@@ -9,13 +9,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - { runson: 'windows-latest',   sys: 'mingw64', env: 'x86_64', name: 'Cglpsdl2', binsuffix: '.exe'}
-          - { runson: 'windows-latest',   sys: 'mingw32', env: 'i686',   name: 'Cglpsdl2', binsuffix: '.exe'}
-          - { runson: 'ubuntu-24.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
-          - { runson: 'ubuntu-20.04',     sys: 'usr',     env: 'x64',    name: 'Cglpsdl2', binsuffix: ''}
-          - { runson: 'ubuntu-24.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04-arm', sys: 'usr',     env: 'arm64',  name: 'Cglpsdl2', binsuffix: ''}
+          - { runson: 'windows-latest',   sys: 'mingw64', env: 'x86_64', name: 'CglpSDL2', binsuffix: '.exe'}
+          - { runson: 'windows-latest',   sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe'}
+          - { runson: 'ubuntu-24.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-20.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-24.04-arm', sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04-arm', sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
 
 
     runs-on: ${{matrix.runson}}
