@@ -47,14 +47,18 @@ jobs:
         run: |
           cd src/cglpSDL2
           mkdir build
-          cmake --build build
-      
+          cd build
+          cmake ..
+          make
+          
       - if: ${{ matrix.runson != 'windows-latest'}}
         name: Build Game Other
         run: |
           cd src/cglpSDL2
           mkdir build
-          cmake --build build -DUSE_VENDORED_SDL=1
+          cd build      
+          cmake -DUSE_VENDORED_SDL=1 ..
+          make
 
       - name: Copy Game And Assets
         run: |
