@@ -76,6 +76,15 @@ jobs:
           cp "src/cglpSDL2/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
           cp ./README.md "./Release/"
           cp ./LICENSE.txt "./Release/"
+          
+      - if: ${{ matrix.runsontype != 'mac'}}
+        name: Copy Game And Assets Other
+        run: |
+          mkdir ./Release
+          mkdir "./Release/${{matrix.name}}"
+          cp "src/cglpSDL2/build/${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
+          cp ./README.md "./Release/${{matrix.name}}/"
+          cp ./LICENSE.txt "./Release/${{matrix.name}}/"
          
       - name: Store build
         uses: actions/upload-artifact@v4
