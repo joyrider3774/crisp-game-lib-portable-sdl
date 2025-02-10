@@ -8,7 +8,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(MACOSX TRUE)
 endif()
 
-project(CglpSDL2)
+project(CglpSDL2 C LINKER_LANGUAGE C)
 
 find_package(SDL2 CONFIG REQUIRED)
 
