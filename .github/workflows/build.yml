@@ -54,7 +54,7 @@ jobs:
         run: |
           cd src/cglpSDL2
           mkdir build
-          cmake --build build -USE_VENDORED_SDL=1
+          cmake --build build -DUSE_VENDORED_SDL=1
 
       - name: Copy Game And Assets
         run: |
