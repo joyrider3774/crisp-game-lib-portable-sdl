@@ -54,7 +54,7 @@ jobs:
           cd src/cglpSDL2
           mkdir build
           cd build
-          cmake -G "Unix Makefiles" ..
+          cmake -G "Unix Makefiles" -DCMAKE_EXECUTABLE_SUFFIX="${{matrix.binsuffix}}" ..
           make
           
       - if: ${{ matrix.runsontype != 'windows'}}
@@ -63,7 +63,7 @@ jobs:
           cd src/cglpSDL2
           mkdir build
           cd build      
-          cmake -DUSE_VENDORED_SDL=1 ..
+          cmake -DUSE_VENDORED_SDL=1 -DCMAKE_EXECUTABLE_SUFFIX="${{matrix.binsuffix}}" ..
           make
 
       - name: Copy Game And Assets
