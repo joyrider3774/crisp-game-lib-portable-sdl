@@ -46,13 +46,15 @@ jobs:
         shell: msys2 {0}
         run: |
           cd src/cglpSDL2
-          cmake --build build -USE_VENDORED_SDL=1
+          mkdir build
+          cmake --build build
       
       - if: ${{ matrix.runson != 'windows-latest'}}
         name: Build Game Other
         run: |
           cd src/cglpSDL2
-          cmake --build build
+          mkdir build
+          cmake --build build -USE_VENDORED_SDL=1
 
       - name: Copy Game And Assets
         run: |
