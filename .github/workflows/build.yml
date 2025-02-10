@@ -16,10 +16,10 @@ jobs:
           - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: '.app'} #adding .app tricks macos in not dispalying console window
-          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: '.app'}
-          - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '.app'}
-          - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '.app'}
+          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
 
 
     runs-on: ${{matrix.runson}}
@@ -66,13 +66,16 @@ jobs:
           cmake -DUSE_VENDORED_SDL=1 ..
           make
 
-      - name: Copy Game And Assets
+      - if: ${{ matrix.runsontype != 'mac'}}
+        name: Copy Game And Assets Mac
         run: |
           mkdir ./Release
-          mkdir "./Release/${{matrix.name}}"
-          cp "src/cglpSDL2/build/${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
-          cp ./README.md "./Release/${{matrix.name}}/"
-          cp ./LICENSE.txt "./Release/${{matrix.name}}/"
+          mkdir "./Release/${{matrix.name}}.app"
+          mkdir "./Release/${{matrix.name}}.app/Contents"
+          mkdir "./Release/${{matrix.name}}.app/Contents/MacOS"
+          cp "src/cglpSDL2/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
+          cp ./README.md "./Release/"
+          cp ./LICENSE.txt "./Release/"
          
       - name: Store build
         uses: actions/upload-artifact@v4
