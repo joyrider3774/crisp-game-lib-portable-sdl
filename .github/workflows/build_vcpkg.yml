@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - { os: windows-latest, env: Windows x86_64, triplet: x64-windows-static, binary: Release/retrotime.exe, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
-          - { os: macos-1015, env: Mac Os x64, triplet: x64-osx, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
+          - { os: macos-13, env: Mac Os x64, triplet: x64-osx, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
           - { os: macos-latest, env: Mac Os arm64, triplet: arm64-osx, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
           - { os: ubuntu-20.04, env: Ubuntu x86_64, triplet: x64-linux, binary: Release/retrotime, vcpkgCommitId: 'a2938d0e28fdb82285ec1be1ab03f962cca3e6a3' }
     runs-on: ${{ matrix.os }} 
