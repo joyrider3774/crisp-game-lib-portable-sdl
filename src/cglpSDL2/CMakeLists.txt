@@ -25,9 +25,11 @@ file(GLOB SRC CONFIGURE_DEPENDS
         "${PROJECT_SOURCE_DIR}/../lib/*.h"
         )
 
-if (! ${MACOSX})
+#if (! ${MACOSX})
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(BUILD_SHARED_LIBS OFF)
 set(CMAKE_EXE_LINKER_FLAGS "-static")
-endif()
+#endif()
 
 add_executable(CglpSDL2)
 target_sources(${PROJECT_NAME} PRIVATE ${SRC} )
