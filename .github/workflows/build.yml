@@ -9,13 +9,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - { runson: 'windows-latest',   sys: 'mingw64', env: 'x86_64', name: 'CglpSDL2', binsuffix: '.exe'}
-          - { runson: 'windows-latest',   sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe'}
-          - { runson: 'ubuntu-24.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-20.04',     sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-24.04-arm', sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04-arm', sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw64', env: 'x86_64', name: 'CglpSDL2', binsuffix: '.exe'}
+          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe'}
+          - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
 
 
     runs-on: ${{matrix.runson}}
@@ -25,7 +28,7 @@ jobs:
         with:
           submodules: 'true'
           
-      - if: ${{ matrix.runson == 'windows-latest'}}
+      - if: ${{ matrix.runsontype == 'windows'}}
         name: Setup Msys
         uses: msys2/setup-msys2@v2
         with:
@@ -37,13 +40,13 @@ jobs:
             mingw-w64-${{matrix.env}}-make
             mingw-w64-${{matrix.env}}-cmake
 
-      - if: ${{ matrix.runson != 'windows-latest'}}
+      - if: ${{ matrix.runsontype == 'linux'}}
         name: install libsdl2-dev
         run: |
           sudo apt update
           sudo apt-get install -y libx11-dev libxft-dev libxext-dev libasound2-dev libgl-dev libglew-dev libgl1-mesa-dev
         
-      - if: ${{ matrix.runson == 'windows-latest'}}
+      - if: ${{ matrix.runsontype == 'windows'}}
         name: Build Game Windows
         shell: msys2 {0}
         run: |
@@ -53,7 +56,7 @@ jobs:
           cmake -G "Unix Makefiles" ..
           make
           
-      - if: ${{ matrix.runson != 'windows-latest'}}
+      - if: ${{ matrix.runsontype != 'windows'}}
         name: Build Game Other
         run: |
           cd src/cglpSDL2
