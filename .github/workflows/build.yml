@@ -46,8 +46,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt-get install -y libasound2-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
-          #will ignore can't locate package errors
-          for i in libdecor-0-dev libdecoration0-dev; do sudo apt-get install -y $i; done
+          for i in libdecor-0-dev libdecoration0-dev; do sudo apt-get install -y $i || true; done
       - if: ${{ matrix.runsontype == 'windows'}}
         name: Build Game Windows
         shell: msys2 {0}
