@@ -28,9 +28,7 @@ file(GLOB SRC CONFIGURE_DEPENDS
 )
 
 if (WIN32)
-	set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -mwindows")
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc")
+	set(CMAKE_EXE_LINKER_FLAGS "-static -mwindows")
 endif()
 
 add_executable(${PROJECT_NAME})
