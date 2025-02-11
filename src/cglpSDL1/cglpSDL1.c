@@ -2,7 +2,6 @@
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL1.h"
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 #ifdef USE_UINT64_TIMER
@@ -13,6 +12,19 @@
     typedef Uint32 TimerType;
     #define PHASE_MAX (1UL << 24)
     #define FREQ_SCALE 512.0f
+#endif
+
+//PI constants
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+    #define M_PI_2 1.57079632679489661923
+#endif
+
+#ifndef M_PI_4
+    #define M_PI_4 0.78539816339744830962
 #endif
 
 #define DEFAULT_GLOW_SIZE 6 * DEFAULT_WINDOW_WIDTH / 240

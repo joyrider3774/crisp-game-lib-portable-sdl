@@ -2,8 +2,8 @@
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL2.h"
-#define _USE_MATH_DEFINES
 #include <math.h>
+#include "CInput.h"
 
 #ifdef USE_UINT64_TIMER
     typedef Uint64 TimerType;
@@ -15,7 +15,19 @@
     #define FREQ_SCALE 512.0f
 #endif
 
-#include "CInput.h"
+//PI constants
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+    #define M_PI_2 1.57079632679489661923
+#endif
+
+#ifndef M_PI_4
+    #define M_PI_4 0.78539816339744830962
+#endif
+
 
 //#define DEBUG_MONITORING
 
