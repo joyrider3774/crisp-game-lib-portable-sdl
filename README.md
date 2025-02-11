@@ -177,7 +177,7 @@ Note: Some features are limited due to device resource limitations.
 
 ### Any Device supporting SDL1 or SDL2
 
-1. (Cross)compile using provided `Makefile` by running `make -f ./src/cglpSDL2/Makefile` or `make -f ./src/cglpSDL1/Makefile` in rootfolder of this repo
+1. (Cross)compile using provided `Makefile` by running `make -f ./src/cglpSDL2/Makefile` or `make -f ./src/cglpSDL1/Makefile` in rootfolder of this repo or use the `CMake` with the provided `src/cglpSDL2/CMakelists` file
 
 1. Checkout `binary --help` for information on commandline parameters
 
