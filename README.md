@@ -31,7 +31,7 @@ see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - HiScore saving
 - Works on many chinese emulation handhelds if you crosscompile (rg35xx sp, rg35xx plus, trimui smart pro, rgb30, ..)
 
-**Windows versions of the SDL2 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
+** Prebuild versions of the SDL2 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
 
 Controls:
 - Keyboard Controls: X, C, S, D, G, ESC, PageUp, PageDown and arrow keys
@@ -49,6 +49,34 @@ Commandline parameters:
 - -g <GAMENAME>: run game <GAMENAME> only
 - -ms: Make screenshot of every game
 
+** Windows Prebuild Versions **
+
+Windows versions will run fine on any recent os and SDL2 library is baked in, what will not work is running the x64 versions on a 32bit os but 32bit versions are available for download as well
+
+** Mac Prebuild Versions and gatekeeper **
+
+Macos prebuild binaries are now available as well for different os and architecture versions and contain the sdl2 lib in the binary. Generally speaking binaries build on older versions of macos will run
+fine on a newer macos if you keep using same architecture but not the other way around. I personally tested the mac os intel builds (not arm ones) on mac os sequoia 15.2 i did not test the arm versions.
+However due to apple requiring signed and notarized binaries, macos will probably prevent you from running the app bundle directly and display a message like in the screenshot below
+
+<img src="meta/gatekeeper1.png">
+
+If this happens you need to go to `system settings` in the `privacy and security` section and scroll all the way down, there will be an entry there where you can unblock it as you can see in 
+screenshot below
+
+<img src="meta/gatekeeper1.png">
+
+once you click allow it will show a new dialog where you choose to open the binary, but you may have to provide the administrator password. 
+
+<img src="meta/gatekeeper1.png">
+
+once you have done this a single time it won't ask about this again.
+
+** (Ubuntu) Linux Prebuild Versions **
+
+Linux prebuild versions are only available for ubuntu flavor os'es and contain sdl2 in the binary already so you don't need to deal with apt normally. However since there are only ubuntu runners on github i can not provide binaries for other
+os'es and the prebuild ones for ubuntu might not work on other os'es. You will just have to build them manually then from source which is not that hard. (More info below). Generally speaking binaries build on older versions of an os will run
+fine on a newer os but not the other way around. I did not test the Arm versions of the binaries
 
 ## Target devices
 
