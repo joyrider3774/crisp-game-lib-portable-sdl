@@ -73,12 +73,13 @@ jobs:
           mkdir "./Release/${{matrix.name}}.app"
           mkdir "./Release/${{matrix.name}}.app/Contents"
           mkdir "./Release/${{matrix.name}}.app/Contents/MacOS"
+          mkdir "./Release/${{matrix.name}}.app/Contents/Resources"
           cp "src/cglpSDL2/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
           cp ./README.md "./Release/"
           cp ./LICENSE.txt "./Release/"
-          mkdir icon.iconset
           
           #for PNG
+          mkdir icon.iconset
           sips -z 16 16 "./meta/icon.png" --out icon.iconset/icon_16x16.png
           sips -z 32 32 "./meta/icon.png" --out icon.iconset/icon_16x16@2x.png
           sips -z 32 32 "./meta/icon.png" --out icon.iconset/icon_32x32.png
@@ -90,8 +91,7 @@ jobs:
           sips -z 512 512 "./meta/icon.png" --out icon.iconset/icon_512x512.png
           sips -z 1024 1024 "./meta/icon.png" --out icon.iconset/icon_512x512@2x.png
           iconutil -c icns icon.iconset -o ./icon.icns
-          mkdir "./Release/${{matrix.name}}.app/Resources"
-          mv ./icon.icns "./Release/${{matrix.name}}.app/Resources/icon.icns"
+          mv ./icon.icns "./Release/${{matrix.name}}.app/Contents/Resources/icon.icns"
           
           #create PList
           echo "<?xml version='1.0' encoding='UTF-8'?>" > "./Release/${{matrix.name}}.app/Contents/Info.plist"
