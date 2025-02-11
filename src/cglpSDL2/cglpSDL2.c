@@ -2,6 +2,8 @@
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL2.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #ifdef USE_UINT64_TIMER
     typedef Uint64 TimerType;
@@ -464,8 +466,11 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    Sint16 *buffer = (Sint16 *)stream;
    int sample_count = len / sizeof(Sint16);
    // Intermediate float buffer to accumulate the summed waveforms
-   float float_buffer[sample_count];
-   memset(float_buffer, 0, sizeof(float_buffer));
+   float* float_buffer = (float*)malloc(sample_count * sizeof(float));
+   if (float_buffer == NULL) {
+       return;
+ 
+   memset(float_buffer, 0, sample_count * sizeof(float));
    
    // Track active notes
    int active_note_count = 0;
@@ -557,6 +562,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    }
 
    audio_state->time += sample_count;
+   free(float_buffer);
 }
 
 void schedule_note(AudioState *audio_state, float frequency, float when, float duration) 
@@ -1249,41 +1255,41 @@ int main(int argc, char **argv)
     bool makescreenshots = false;
     for (int i=0; i < argc; i++)
     {
-        if((strcasecmp(argv[i], "-?") == 0) || (strcasecmp(argv[i], "--?") == 0) || 
-            (strcasecmp(argv[i], "/?") == 0) || (strcasecmp(argv[i], "-help") == 0) || (strcasecmp(argv[i], "--help") == 0))
+        if((strcmp(argv[i], "-?") == 0) || (strcmp(argv[i], "--?") == 0) || 
+            (strcmp(argv[i], "/?") == 0) || (strcmp(argv[i], "-help") == 0) || (strcmp(argv[i], "--help") == 0))
         {
             printHelp(argv[0]);
             return 0;
         }
 
-        if(strcasecmp(argv[i], "-f") == 0)
+        if(strcmp(argv[i], "-f") == 0)
             fullScreen = true;
         
-        if(strcasecmp(argv[i], "-a") == 0)
+        if(strcmp(argv[i], "-a") == 0)
             useHWSurface = true;
         
-        if(strcasecmp(argv[i], "-fps") == 0)
+        if(strcmp(argv[i], "-fps") == 0)
             showfps = true;
         
-        if(strcasecmp(argv[i], "-ns") == 0)
+        if(strcmp(argv[i], "-ns") == 0)
 			noAudioInit = true;
 
-        if(strcasecmp(argv[i], "-nd") == 0)
+        if(strcmp(argv[i], "-nd") == 0)
 			nodelay = true;
 
-        if(strcasecmp(argv[i], "-w") == 0)
+        if(strcmp(argv[i], "-w") == 0)
             if(i+1 < argc)
                 WINDOW_WIDTH = atoi(argv[i+1]);
         
-        if(strcasecmp(argv[i], "-h") == 0)
+        if(strcmp(argv[i], "-h") == 0)
             if(i+1 < argc)
                 WINDOW_HEIGHT = atoi(argv[i+1]);
         
-        if(strcasecmp(argv[i], "-g") == 0)
+        if(strcmp(argv[i], "-g") == 0)
             if(i+1 < argc)
                 startgame = i+1;
         
-        if(strcasecmp(argv[i], "-list") == 0)
+        if(strcmp(argv[i], "-list") == 0)
         {
             initGame();
             quit = 1;
@@ -1299,7 +1305,7 @@ int main(int argc, char **argv)
             return 0;
         }
         
-        if(strcasecmp(argv[i], "-ms") == 0)
+        if(strcmp(argv[i], "-ms") == 0)
             makescreenshots = true;
     }
 
@@ -1373,7 +1379,7 @@ int main(int argc, char **argv)
                     startgame = -1;
                     for (int i = 0; i < gameCount; i++)
                     {
-                        if(strcasecmp(argv[tmp], getGame(i).title) == 0)
+                        if(strcmp(argv[tmp], getGame(i).title) == 0)
                         {
                             startgame = i;
                             restartGame(i);
