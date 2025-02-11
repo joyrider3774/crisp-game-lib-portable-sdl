@@ -467,7 +467,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    int sample_count = len / sizeof(Sint16);
    // Intermediate float buffer to accumulate the summed waveforms
    float* float_buffer = (float*)malloc(sample_count * sizeof(float));
-   if (float_buffer == NULL) {
+   if (float_buffer == NULL)
        return;
  
    memset(float_buffer, 0, sample_count * sizeof(float));
