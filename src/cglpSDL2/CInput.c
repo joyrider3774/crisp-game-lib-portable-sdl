@@ -6,6 +6,7 @@
 
 CInput* CInput_Create()
 {
+	SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 	CInput* Result = (CInput*)malloc(sizeof(CInput));
 	Result->JoystickDeadZone = 10000;
 	Result->TriggerDeadZone = 10000;
@@ -33,6 +34,7 @@ void CInput_Destroy(CInput *Input)
 	}
 	free(Input);
 	Input = NULL;
+	SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
 }
 
 

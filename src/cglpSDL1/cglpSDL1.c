@@ -1227,7 +1227,7 @@ void printHelp(char* exe)
 
 int main(int argc, char **argv)
 {
-	if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_VIDEO | SDL_INIT_AUDIO ) == 0)
+	if (SDL_Init(SDL_INIT_VIDEO) == 0)
 	{
         printf("SDL Succesfully initialized\n");
 		bool fullScreen = false;
@@ -1332,11 +1332,16 @@ int main(int argc, char **argv)
             }
             if(!noAudioInit)
             {
-                soundOn = InitAudio();
-                if(soundOn == 1)
-                    printf("Succesfully opened audio\n");
+                if(SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
+                    printf("Failed to open audio: %s\n", SDL_GetError());
                 else
-                    printf("Failed to open audio\n");
+                {
+                    soundOn = InitAudio();
+                    if(soundOn == 1)
+                        printf("Succesfully opened audio\n");
+                    else
+                        printf("Failed to open audio\n");
+                }
             } 
             if (startgame > 1)
             {

@@ -1304,7 +1304,7 @@ int main(int argc, char **argv)
     }
 
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) == 0)
+    if (SDL_Init(SDL_INIT_VIDEO) == 0)
     {
         SDL_Log("SDL Succesfully initialized\n");
         Uint32 WindowFlags = SDL_WINDOW_RESIZABLE;
@@ -1356,11 +1356,16 @@ int main(int argc, char **argv)
                 }
                 if(!noAudioInit)
                 {
-                    soundOn = InitAudio();
-                    if(soundOn == 1)
-                        SDL_Log("Succesfully opened audio\n");
+                    if(SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
+                        SDL_Log("Failed to open audio: %s\n", SDL_GetError());
                     else
-                        SDL_Log("Failed to open audio\n");
+                    {
+                        soundOn = InitAudio();
+                        if(soundOn == 1)
+                            SDL_Log("Succesfully opened audio\n");
+                        else
+                            SDL_Log("Failed to open audio\n");
+                    }
                 } 
                 if (startgame > 1)
                 {
