@@ -76,6 +76,47 @@ jobs:
           cp "src/cglpSDL2/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
           cp ./README.md "./Release/"
           cp ./LICENSE.txt "./Release/"
+          mkdir Icon.iconset
+          
+          #for PNG
+          sips -z 16 16 "./meta/icon.png" --out Icon.iconset/icon_16x16.png
+          sips -z 32 32 "./meta/icon.png" --out Icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 "./meta/icon.png" --out Icon.iconset/icon_32x32.png
+          sips -z 64 64 "./meta/icon.png" --out Icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 "./meta/icon.png" --out Icon.iconset/icon_128x128.png
+          sips -z 256 256 "./meta/icon.png" --out Icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 "./meta/icon.png" --out Icon.iconset/icon_256x256.png
+          sips -z 512 512 "./meta/icon.png" --out Icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 "./meta/icon.png" --out Icon.iconset/icon_512x512.png
+          sips -z 1024 1024 "./meta/icon.png" --out Icon.iconset/icon_512x512@2x.png
+          iconutil -c icns Icon.iconset
+          mv icon.icns "./Release/${{matrix.name}}.app/Contents/Resources/Icon.icns"
+          
+          #create PList
+          echo "<?xml version='1.0' encoding='UTF-8'?>" > "./Release/${{matrix.name}}.app/Contents"
+          echo "<!DOCTYPE plist PUBLIC '-//Apple Computer//DTD PLIST 1.0//EN' 'http://www.apple.com/DTDs/PropertyList-1.0.dtd'>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "<plist version='1.0'>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "  <dict>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleExecutable</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>CglpSDL2</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleIdentifier</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>com.github.joyrider3774.cglpsdl2</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleName</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>Crisp Game Library Portable</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleIconFile</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>Icon.icns</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleShortVersionString</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>0.01</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundleInfoDictionaryVersion</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>6.0</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>CFBundlePackageType</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <string>APPL</string>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>IFMajorVersion</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <integer>0</integer>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <key>IFMinorVersion</key>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "    <integer>1</integer>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "  </dict>" >> "./Release/${{matrix.name}}.app/Contents"
+          echo "</plist>" >> "./Release/${{matrix.name}}.app/Contents"
           
       - if: ${{ matrix.runsontype != 'mac'}}
         name: Copy Game And Assets Other
