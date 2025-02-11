@@ -89,8 +89,9 @@ jobs:
           sips -z 512 512 "./meta/icon.png" --out icon.iconset/icon_256x256@2x.png
           sips -z 512 512 "./meta/icon.png" --out icon.iconset/icon_512x512.png
           sips -z 1024 1024 "./meta/icon.png" --out icon.iconset/icon_512x512@2x.png
-          iconutil -c icns icon.iconset
+          iconutil -c icns icon.iconset -o ./icon.icns
           mkdir "./Release/${{matrix.name}}.app/Resources"
+          ls .
           mv icon.icns "./Release/${{matrix.name}}.app/Contents/Resources/icon.icns"
           
           #create PList
