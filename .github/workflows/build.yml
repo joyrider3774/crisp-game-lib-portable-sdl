@@ -45,8 +45,9 @@ jobs:
         name: install libsdl2 dependencies
         run: |
           sudo apt update
-          sudo apt-get install -y libglib2.0-dev libcairo2-dev libpango1.0-dev libsndio7.0 sndio libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
-          for i in libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev; do sudo apt-get install -y $i || true; done
+          sudo apt-get install -y libglib2.0-dev libcairo2-dev libpango1.0-dev libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
+          #try these 1 by 1 as they are different on different ubuntu versions
+          for i in libsndio7.0 libsndio7.1 libsndio7.2 libsndio-dev libasound2-dev libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev libpipewire-dev; do sudo apt-get install -y $i || true; done
         
       - if: matrix.runson == 'ubuntu-20.04'
         name: Install libsdl2 extra dependencies (Ubuntu 20.04)
