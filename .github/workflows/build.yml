@@ -51,28 +51,24 @@ jobs:
       - if: matrix.runson == 'ubuntu-20.04'
         name: Install dependencies (Ubuntu 20.04)
         run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          meson \
-          ninja-build \
-          cmake \
-          
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build cmake          
 
-        # Build and install libdecor
-        git clone https://gitlab.freedesktop.org/libdecor/libdecor.git
-        cd libdecor
-        meson setup build
-        ninja -C build
-        sudo ninja -C build install
-        cd ..
+          # Build and install libdecor
+          git clone https://gitlab.freedesktop.org/libdecor/libdecor.git
+          cd libdecor
+          meson setup build
+          ninja -C build
+          sudo ninja -C build install
+          cd ..
 
-        # Install PipeWire
-        sudo add-apt-repository ppa:pipewire/pipewire-2020 -y
-        sudo apt-get update
-        sudo apt-get install -y libpipewire-0.3-dev pipewire
+          # Install PipeWire
+          sudo add-apt-repository ppa:pipewire/pipewire-2020 -y
+          sudo apt-get update
+          sudo apt-get install -y libpipewire-0.3-dev pipewire
 
-        # Refresh ldconfig to ensure new libraries are found
-        sudo ldconfig
+          # Refresh ldconfig to ensure new libraries are found
+          sudo ldconfig
           
       - if: ${{ matrix.runsontype == 'windows'}}
         name: Build Game Windows
