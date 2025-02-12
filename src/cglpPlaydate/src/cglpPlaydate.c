@@ -1,6 +1,7 @@
 #include "cglp.h"
 #include "machineDependent.h"
 #include "pd_api.h"
+#include "math.h"
 
 #define SYNTH_COUNT 4
 #define CRANK_ON_DEGREE 5
@@ -188,6 +189,7 @@ static int update(void* userdata) {
                  (buttonsCurrent & kButtonDown) || crankWay == -1,
                  buttonsCurrent & kButtonB, buttonsCurrent & kButtonA);
   updateFrame();
+  //pd->system->drawFPS(0, 0);
   if (!isInMenu) {
     if ((buttonsCurrent & kButtonA) && (buttonsCurrent & kButtonB) &&
         (buttonsCurrent & kButtonUp) && (buttonsCurrent & kButtonRight)) {
