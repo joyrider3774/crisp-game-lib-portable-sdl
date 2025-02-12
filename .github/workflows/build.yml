@@ -45,8 +45,35 @@ jobs:
         name: install libsdl2-dev
         run: |
           sudo apt update
-          sudo apt-get install -y libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
+          sudo apt-get install -y libcairo2-dev libpango1.0-dev libsndio7.0 libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
           for i in libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev; do sudo apt-get install -y $i || true; done
+        
+      - if: matrix.runson == 'ubuntu-20.04'
+        name: Install dependencies (Ubuntu 20.04)
+        run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          meson \
+          ninja-build \
+          cmake \
+          
+
+        # Build and install libdecor
+        git clone https://gitlab.freedesktop.org/libdecor/libdecor.git
+        cd libdecor
+        meson setup build
+        ninja -C build
+        sudo ninja -C build install
+        cd ..
+
+        # Install PipeWire
+        sudo add-apt-repository ppa:pipewire/pipewire-2020 -y
+        sudo apt-get update
+        sudo apt-get install -y libpipewire-0.3-dev pipewire
+
+        # Refresh ldconfig to ensure new libraries are found
+        sudo ldconfig
+          
       - if: ${{ matrix.runsontype == 'windows'}}
         name: Build Game Windows
         shell: msys2 {0}
