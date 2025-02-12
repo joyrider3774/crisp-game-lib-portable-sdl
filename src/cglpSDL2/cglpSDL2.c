@@ -29,7 +29,6 @@
 #endif
 
 
-//#define DEBUG_MONITORING
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
@@ -142,7 +141,7 @@ AudioState audio_state = {0};
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
 
-void resetGame(Game *game)
+static void resetGame(Game *game)
 {
     if((strlen(game->title) == 0) || (game->update == NULL) )
         return;
@@ -174,7 +173,7 @@ void resetGame(Game *game)
 
 }
 
-CRTEffect* CreateCRTEffect(int screenWidth, int screenHeight, int screenOffsetX, int screenOffsetY,
+static CRTEffect* CreateCRTEffect(int screenWidth, int screenHeight, int screenOffsetX, int screenOffsetY,
     int scanlineSpacing, int scanelineThickness, float scanlineFps, 
     Uint8 scanlineR, Uint8 scanlineG, Uint8 scanlineB, Uint8 scanlineA) {
     
@@ -221,7 +220,7 @@ CRTEffect* CreateCRTEffect(int screenWidth, int screenHeight, int screenOffsetX,
     return effect;
 }
 
-void UpdateCRTEffect(CRTEffect* effect, float deltaTime)
+static void UpdateCRTEffect(CRTEffect* effect, float deltaTime)
 {
     if (!effect) return;
 
@@ -232,7 +231,7 @@ void UpdateCRTEffect(CRTEffect* effect, float deltaTime)
     }
 }
 
-void RenderCRTEffect(SDL_Surface* screenSurface, CRTEffect* effect)
+static void RenderCRTEffect(SDL_Surface* screenSurface, CRTEffect* effect)
 {
     if (!effect || !screenSurface) return;
 
@@ -275,7 +274,7 @@ void RenderCRTEffect(SDL_Surface* screenSurface, CRTEffect* effect)
     }
 }
 
-void DestroyCRTEffect(CRTEffect* effect)
+static void DestroyCRTEffect(CRTEffect* effect)
 {
     if (!effect) return;
     
@@ -298,7 +297,7 @@ static void loadGameOverlays()
     onResetGame = resetGame;
     //load
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/.cglpoverlays.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    sprintf(fileName,"%s/.cglpoverlays.dat",SDL_getenv("HOME") == NULL ? ".": SDL_getenv("HOME"));
     FILE *fp;
     fp = fopen(fileName, "rb");
     if(fp)
@@ -319,7 +318,7 @@ static void loadGameOverlays()
 static void saveGameOverlays()
 {
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/.cglpoverlays.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    sprintf(fileName,"%s/.cglpoverlays.dat", SDL_getenv("HOME") == NULL ? ".": SDL_getenv("HOME"));
     FILE *fp;
     fp = fopen(fileName, "wb");
     if(fp)
@@ -341,7 +340,7 @@ static void saveGameOverlays()
 static void loadHighScores()
 {
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/.cglpscore.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    sprintf(fileName,"%s/.cglpscore.dat", SDL_getenv("HOME") == NULL ? ".": SDL_getenv("HOME"));
     FILE *fp;
     fp = fopen(fileName, "rb");
     if(fp)
@@ -360,7 +359,7 @@ static void loadHighScores()
 static void saveHighScores()
 {
     char fileName[FILENAME_MAX];
-    sprintf(fileName,"%s/.cglpscore.dat",getenv("HOME") == NULL ? ".": getenv("HOME"));
+    sprintf(fileName,"%s/.cglpscore.dat", SDL_getenv("HOME") == NULL ? ".": SDL_getenv("HOME"));
     FILE *fp;
     fp = fopen(fileName, "wb");
     if(fp)
@@ -383,7 +382,7 @@ static GlowDistanceTable* createDistanceTable(int glowSize) {
 
     int size = glowSize * 2 + 1;
     table->size = size;
-    table->distances = (Uint8*)SDL_malloc(size * size);
+    table->distances = (Uint8*)SDL_malloc((size_t)size * size);
     
     if (!table->distances) {
         SDL_free(table);
@@ -433,7 +432,7 @@ static void resetCharacterSprite() {
 }
 
 // Simulate buggy sinf: restricts output to 0, 1, -1 based on 90° increments
-float buggySinf(float angle) 
+static float buggySinf(float angle)
 {
     NORMALIZE_ANGLE(angle);  // Normalize angle to [0, 2π)
 
@@ -577,7 +576,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
    free(float_buffer);
 }
 
-void schedule_note(AudioState *audio_state, float frequency, float when, float duration) 
+static void schedule_note(AudioState *audio_state, float frequency, float when, float duration)
 {
     if (audio_state->note_count >= MAX_NOTES)
     {
@@ -611,7 +610,7 @@ void md_stopTone()
 }
 
 
-int InitAudio()
+static int InitAudio()
 {
 	SDL_AudioSpec spec = {0};
     spec.freq = SAMPLE_RATE;
@@ -641,7 +640,7 @@ float md_getAudioTime()
     return sampleToTime(audio_state.time);
 }
 
-void applyGlowToRect(SDL_Surface* surface, SDL_Rect rect, int glowRadius, Uint8 glowAlpha,
+static void applyGlowToRect(SDL_Surface* surface, SDL_Rect rect, int glowRadius, Uint8 glowAlpha,
                      Uint8 r, Uint8 g, Uint8 b) {
     if (!surface || glowRadius <= 0 || glowAlpha == 0) {
         return;
@@ -748,7 +747,7 @@ void applyGlowToRect(SDL_Surface* surface, SDL_Rect rect, int glowRadius, Uint8 
 
 
 // Update glow application to use distance table
-void applyGlowToCharacterPixel(SDL_Surface* surface, int centerX, int centerY, 
+static void applyGlowToCharacterPixel(SDL_Surface* surface, int centerX, int centerY,
                               Uint8 r, Uint8 g, Uint8 b, 
                               int glowRadius, Uint8 glowAlpha) {
     if (!surface || glowRadius <= 0) return;
@@ -805,7 +804,7 @@ void applyGlowToCharacterPixel(SDL_Surface* surface, int centerX, int centerY,
     SDL_UnlockSurface(surface);
 }
 
-SDL_Surface* createCharacterSurface(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
+static SDL_Surface* createCharacterSurface(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
                                   float scale, int glowRadius, Uint8 glowAlpha,
                                   bool withGlow) {
     int baseWidth = (int)ceilf((float)CHARACTER_WIDTH * scale);
@@ -1047,7 +1046,7 @@ void md_consoleLog(char* msg)
     SDL_Log(msg); 
 }
 
-void update() {    
+static void update() {
     CInput_Update(GameInput);
     if(GameInput->Buttons.ButQuit)
         quit = 1;
@@ -1154,7 +1153,7 @@ void update() {
     updateFrame();
     if(!isInMenu && (overlay == 1))
     {
-        SDL_Rect dst;
+        SDL_Rect dst = { 0 };
 
         // Always ensure minimum 1 pixel
         float pixelSize = ceilf(1.0f * wscale);
@@ -1235,11 +1234,15 @@ void update() {
     }
 }
 
-void printHelp(char* exe)
+static void printHelp(char* exe)
 {
-    char *binaryName = strrchr(exe, '/');
-    if (!binaryName)
-        binaryName = strrchr(exe, '\\');
+    char* binaryName = SDL_strrchr(exe, '/');
+    if (binaryName == NULL)
+    {
+        binaryName = SDL_strrchr(exe, '\\');
+        if(binaryName == NULL)
+            binaryName = exe;
+    }
     if(binaryName)
         ++binaryName;
 
