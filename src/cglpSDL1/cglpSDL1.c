@@ -1373,7 +1373,7 @@ int main(int argc, char **argv)
                 startgame = -1;
                 for (int i = 0; i < gameCount; i++)
                 {
-                        if(strcmp(argv[tmp], getGame(i).title) == 0)
+                    if(strcmp(argv[tmp], getGame(i).title) == 0)
                     {
                         startgame = i;
                         restartGame(i);
