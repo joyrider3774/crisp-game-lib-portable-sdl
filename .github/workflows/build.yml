@@ -65,7 +65,7 @@ jobs:
           cd ..
 
           # Install PipeWire
-          sudo add-apt-repository ppa:pipewire/pipewire-2020 -y
+          sudo add-apt-repository ppa:pipewire/ubuntu -y
           sudo apt-get update
           sudo apt-get install -y libpipewire-0.3-dev pipewire
 
