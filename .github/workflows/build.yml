@@ -52,7 +52,9 @@ jobs:
         name: Install dependencies (Ubuntu 20.04)
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build cmake          
+          sudo apt-get remove -y meson
+          sudo apt-get install -y python3-pip ninja-build cmake
+          sudo pip3 install meson==0.63.0
 
           # Build and install libdecor
           git clone https://gitlab.freedesktop.org/libdecor/libdecor.git
