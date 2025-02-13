@@ -48,6 +48,7 @@ Commandline parameters:
 - -list: List game names to be used with -g option
 - -g <GAMENAME>: run game <GAMENAME> only
 - -ms: Make screenshot of every game
+- -cgl: create fake <GAMENAME>.cgl rom files which can be used as a parameter to launch the games
 
 **Windows Prebuild Versions**
 
