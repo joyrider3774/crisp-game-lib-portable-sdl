@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <string.h>
 #include "machineDependent.h"
 #include "cglp.h"
 #include "cglpSDL2.h"
@@ -77,7 +78,7 @@ static bool glowEnabled = DEFAULT_GLOW_ENABLED;
 static SDL_Surface *view = NULL;
 static SDL_Texture *viewTexture = NULL;
 static bool nodelay = false;
-static int startgame = -1;
+static char startgame[100] = {0};
 
 static int fpsSamples[FPS_SAMPLES];
 static bool showfps = false;
@@ -1061,7 +1062,7 @@ static void update() {
 
     if ((!GameInput->PrevButtons.ButBack) && (GameInput->Buttons.ButBack))
     {
-        if (!isInMenu && (startgame == -1))
+        if (!isInMenu && (startgame[0] == 0))
             goToMenu();
         else
             quit = 1;
@@ -1262,14 +1263,65 @@ static void printHelp(char* exe)
     printf("  -ms: Make screenshot of every game\n");
 }
 
-int main(int argc, char **argv)
+void SDL_Cleanup()
+{
+    SDL_Event Event;
+    while(SDL_PollEvent(&Event))
+        SDL_Delay(1);
+    SDL_Delay(250);
+    
+    SDL_Quit();
+}
+
+int main(int argc, char** argv)
 {
     bool fullScreen = false;
     bool useHWSurface = false;
     bool noAudioInit = false;
     bool makescreenshots = false;
-    for (int i=0; i < argc; i++)
+    for (int i = 0; i < argc; i++)
     {
+        printf("param %d %s\n", i, argv[i]);
+        char* ext = strrchr(argv[i], '.');
+        if (ext != NULL)
+        {
+            if (strcmp(ext, ".cgl") == 0)
+            {
+                memset(startgame, 0, 100);
+                char* gamestart = strrchr(argv[i], '/');
+                if (gamestart == NULL)
+                    gamestart = strrchr(argv[i], '\\');
+                if (gamestart != NULL)
+                {
+                    gamestart++;
+                    for (char* j = gamestart; j < ext; j++)
+                        startgame[j - gamestart] = toupper(*j);
+                }
+            }
+        }
+                    
+        if(strcmp(argv[i], "-cgl") == 0)
+        {
+            initGame();
+            for(int i = 0; i < gameCount; i++)
+            {
+                Game g = getGame(i);
+                if(strlen(g.title) > 0 && (g.update != NULL))
+                {
+                        
+                    char filename[512];
+                    sprintf(filename, "./%s.cgl", g.title);
+                    FILE *f = fopen(filename, "w");
+                    if(f)
+                    {
+                        fwrite(g.title, sizeof(char), strlen(g.title), f);
+                        fclose(f);
+                    }
+                }
+            }
+            return 0;
+        }
+
         if((strcmp(argv[i], "-?") == 0) || (strcmp(argv[i], "--?") == 0) || 
             (strcmp(argv[i], "/?") == 0) || (strcmp(argv[i], "-help") == 0) || (strcmp(argv[i], "--help") == 0))
         {
@@ -1302,7 +1354,10 @@ int main(int argc, char **argv)
         
         if(strcmp(argv[i], "-g") == 0)
             if(i+1 < argc)
-                startgame = i+1;
+            {
+                memset(startgame, 0, 100);
+                strcpy(startgame, argv[i+1]);
+            }
         
         if(strcmp(argv[i], "-list") == 0)
         {
@@ -1328,6 +1383,7 @@ int main(int argc, char **argv)
     if (SDL_Init(SDL_INIT_VIDEO) == 0)
     {
         SDL_Log("SDL Succesfully initialized\n");
+        atexit(SDL_Cleanup);
         Uint32 WindowFlags = SDL_WINDOW_RESIZABLE;
         if (fullScreen)
         {
@@ -1387,23 +1443,25 @@ int main(int argc, char **argv)
                         else
                             SDL_Log("Failed to open audio\n");
                     }
-                } 
-                if (startgame > 1)
-                {
-                    int tmp = startgame;
-                    startgame = -1;
-                    for (int i = 0; i < gameCount; i++)
-                    {
-                        if(strcmp(argv[tmp], getGame(i).title) == 0)
-                        {
-                            startgame = i;
-                            restartGame(i);
-                            break;
-                        }
-                    }
                 }
                 loadHighScores();
                 loadGameOverlays();
+	            if (startgame[0] != 0)
+	            {
+	                SDL_Log("Start Game: %s", startgame);
+	                bool found = false;
+	                for (int i = 0; i < gameCount; i++)
+	                {
+	                    if(strcmp(startgame, getGame(i).title) == 0)
+	                    {
+	                        found = true;
+	                        restartGame(i);
+	                        break;
+	                    }
+	                }
+	                if(!found)
+	                    memset(startgame, 0, 100);
+	            }                
                 GameInput = CInput_Create();
                 int skip = 10;
                 while(quit == 0)
@@ -1454,6 +1512,12 @@ int main(int argc, char **argv)
                 SDL_DestroyRenderer(Renderer);
                 saveHighScores();
                 saveGameOverlays();
+                if(soundOn)
+                {
+                    SDL_PauseAudio(1);
+                    SDL_CloseAudio();
+                    SDL_QuitSubSystem(SDL_INIT_AUDIO);
+                }
             }
             else
             {
@@ -1465,7 +1529,6 @@ int main(int argc, char **argv)
         {
             SDL_Log("Failed to create SDL_Window %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
         }
-        SDL_Quit();
     }
     else
     {
