@@ -157,6 +157,12 @@ jobs:
           cp "src/cglpSDL2/build/${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
           cp ./README.md "./Release/${{matrix.name}}/"
           cp ./LICENSE.txt "./Release/${{matrix.name}}/"
+          
+      - name: Copy Meta Files
+        run: |
+          cp -r "meta/cgl files" "./Release/"
+          cp -r "meta/screenshots" "./Release/"
+          cp "meta/cglpsdl1-preview.png" "./Release/cglpsdl1-preview.png"
          
       - name: Store build
         uses: actions/upload-artifact@v4
