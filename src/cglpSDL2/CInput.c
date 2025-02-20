@@ -1,7 +1,8 @@
 #include <SDL.h>
 #include <SDL_joystick.h>
-#include "CInput.h"
+#include <math.h>
 #include <stdbool.h>
+#include "CInput.h"
 #include "cglpSDL2.h"
 
 CInput* CInput_Create()
