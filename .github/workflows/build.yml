@@ -3,9 +3,10 @@ on:
   # Allows you to run this workflow manually target the Actions tab
   workflow_dispatch:
 
-name: Build ${{matrix.name}}-${{matrix.runson}}_${{ matrix.env }} 
+name: Build
 jobs:
   build:
+    name: Build ${{matrix.name}}-${{matrix.runson}}_${{ matrix.env }}
     strategy:
       matrix:
         include:
@@ -33,7 +34,7 @@ jobs:
           - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
 
 
-    runs-on: ${{matrix.runson}}
+    runs-on: ${{matrix.runson}}    
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
