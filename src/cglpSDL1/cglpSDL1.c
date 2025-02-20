@@ -1,3 +1,7 @@
+#if defined _WIN32 || defined __CYGWIN__
+    #include <windows.h>
+    #undef TRANSPARENT
+#endif
 #include <stdlib.h>
 #include <SDL.h>
 #include <string.h>
@@ -1236,8 +1240,8 @@ static void printHelp(char* exe)
     if(binaryName)
         ++binaryName;
 
-    printf("Crisp Game Lib Portable Sdl2 Version\n");
-    printf("Usage: %s <command1> <command2> ...\n", binaryName);
+    printf("Crisp Game Lib Portable Sdl 1 Version\n");
+    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [CGL file]  \n", binaryName);
     printf("\n");
     printf("Commands:\n");
     printf("  -w <WIDTH>: use <WIDTH> as window width\n");
@@ -1250,6 +1254,7 @@ static void printHelp(char* exe)
     printf("  -list: List game names to be used with -g option\n");
     printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
     printf("  -ms: Make screenshot of every game\n");
+    printf("  CGL file: Pass a .cgl file to launch a game directly\n");
 }
 
 void SDL_Cleanup()
@@ -1264,6 +1269,14 @@ void SDL_Cleanup()
 
 int main(int argc, char **argv)
 {
+//attach to potential console when using -mwindows
+#if defined _WIN32 || defined __CYGWIN__
+    if(AttachConsole((DWORD)-1))
+    {
+        freopen("CON", "w", stderr);
+        freopen("CON", "w", stdout);
+    }
+#endif
 	if (SDL_Init(SDL_INIT_VIDEO) == 0)
 	{
         printf("SDL Succesfully initialized\n");
@@ -1274,7 +1287,7 @@ int main(int argc, char **argv)
         bool makescreenshots = false;
         for (int i=0; i < argc; i++)
 		{
-            printf("param %d %s\n", i, argv[i]);
+            //printf("param %d %s\n", i, argv[i]);
             char *ext = strrchr(argv[i], '.');
             if(ext != NULL)
             {
@@ -1387,7 +1400,7 @@ int main(int argc, char **argv)
         screen = SDL_SetVideoMode( WINDOW_WIDTH, WINDOW_HEIGHT, 0, videoFlags);
 		if(screen)
 		{
-			SDL_WM_SetCaption( "Crisp Game Lib Portable Sdl1", NULL);
+			SDL_WM_SetCaption( "Crisp Game Lib Portable Sdl 1", NULL);
 			printf("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
             initCharacterSprite();
             initGame();

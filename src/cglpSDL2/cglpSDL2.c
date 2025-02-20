@@ -1,3 +1,7 @@
+#if defined _WIN32 || defined __CYGWIN__
+    #include <windows.h>
+    #undef TRANSPARENT
+#endif
 #include <stdlib.h>
 #include <SDL.h>
 #include <string.h>
@@ -1248,8 +1252,8 @@ static void printHelp(char* exe)
     if(binaryName)
         ++binaryName;
 
-    printf("Crisp Game Lib Portable Sdl2 Version\n");
-    printf("Usage: %s <command1> <command2> ...\n", binaryName);
+    printf("Crisp Game Lib Portable Sdl 2 Version\n");
+    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [CGL file]  \n", binaryName);
     printf("\n");
     printf("Commands:\n");
     printf("  -w <WIDTH>: use <WIDTH> as window width\n");
@@ -1262,6 +1266,7 @@ static void printHelp(char* exe)
     printf("  -list: List game names to be used with -g option\n");
     printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
     printf("  -ms: Make screenshot of every game\n");
+    printf("  CGL file: Pass a .cgl file to launch a game directly\n");
 }
 
 void SDL_Cleanup()
@@ -1276,13 +1281,24 @@ void SDL_Cleanup()
 
 int main(int argc, char** argv)
 {
+//attach to potential console when using -mwindows and redefine SDL_Log to printf
+//so we can get output in a cmd / msys prompt but see no console window when running 
+//from explorer start menu or so
+#if defined _WIN32 || defined __CYGWIN__
+    if(AttachConsole((DWORD)-1))
+    {
+        freopen("CON", "w", stderr);
+        freopen("CON", "w", stdout);
+        #define SDL_Log printf
+    }
+#endif
     bool fullScreen = false;
     bool useHWSurface = false;
     bool noAudioInit = false;
     bool makescreenshots = false;
     for (int i = 0; i < argc; i++)
     {
-        printf("param %d %s\n", i, argv[i]);
+        //SDL_Log("param %d %s\n", i, argv[i]);
         char* ext = strrchr(argv[i], '.');
         if (ext != NULL)
         {
@@ -1370,7 +1386,7 @@ int main(int argc, char** argv)
                 if(getGame(i).update != NULL)
                 {
                     counter++;
-                    printf("%d. %s\n", counter, getGame(i).title);
+                    SDL_Log("%d. %s\n", counter, getGame(i).title);
                 }
             }
             return 0;
@@ -1391,7 +1407,7 @@ int main(int argc, char** argv)
             WindowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
         }
 
-        SdlWindow = SDL_CreateWindow("Crisp Game Lib Portable Sdl2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, WindowFlags);
+        SdlWindow = SDL_CreateWindow("Crisp Game Lib Portable Sdl 2", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, WindowFlags);
 
         if (SdlWindow)
         {
@@ -1409,6 +1425,19 @@ int main(int argc, char** argv)
                 SDL_RendererInfo rendererInfo;
                 SDL_GetRendererInfo(Renderer, &rendererInfo);
                 SDL_Log("Using Renderer:%s\n", rendererInfo.name);
+                char RenderDriverNames[1000];
+                memset(RenderDriverNames, 0, 1000);
+                for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
+                {
+                    SDL_RendererInfo info;
+                    if (SDL_GetRenderDriverInfo(i,&info) == 0)
+                    {
+                        if(i > 0)
+                            strcat(RenderDriverNames, ",");
+                        strcat(RenderDriverNames, info.name);
+                    }
+                }
+                SDL_Log("Available Renders: %s\n", RenderDriverNames);
                 SDL_Log("Succesfully Created Buffer\n");
                 initCharacterSprite();
                 initGame();

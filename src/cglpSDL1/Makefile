@@ -38,12 +38,6 @@ CFLAGS += -g -DDEBUG
 LDFLAGS += -g
 endif
 
-ifeq ($(OS),Windows_NT)
-ifneq ($(DEBUG),0)
-LDLIBS += -mconsole
-endif
-endif
-
 #MINGW does not have X11 and does not require it
 #dont know about cygwin
 ifneq ($(OS),Windows_NT)
