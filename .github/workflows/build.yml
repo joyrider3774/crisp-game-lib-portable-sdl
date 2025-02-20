@@ -9,17 +9,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw64', env: 'x86_64', name: 'CglpSDL2', binsuffix: '.exe'}
-          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe'}
-          - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
-          - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: ''}
+          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw64', env: 'x86_64', name: 'CglpSDL3', binsuffix: '.exe'}
+          - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL3', binsuffix: '.exe'}
+          - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: ''}
+          - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: ''}
 
 
     runs-on: ${{matrix.runson}}
@@ -42,7 +42,7 @@ jobs:
             mingw-w64-${{matrix.env}}-ninja
 
       - if: ${{ matrix.runsontype == 'linux'}}
-        name: install libsdl2 dependencies
+        name: install libsdl3 dependencies
         run: |
           sudo apt update
           sudo apt-get install -y libglib2.0-dev libcairo2-dev libpango1.0-dev libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
@@ -50,7 +50,7 @@ jobs:
           for i in libsndio7.0 libsndio7.1 libsndio7.2 libsndio-dev libasound2-dev libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev libpipewire-dev; do sudo apt-get install -y $i || true; done
         
       - if: matrix.runson == 'ubuntu-20.04'
-        name: Install libsdl2 extra dependencies (Ubuntu 20.04)
+        name: Install libsdl3 extra dependencies (Ubuntu 20.04)
         run: |
           sudo apt-get update
           sudo apt-get remove -y meson
@@ -81,7 +81,7 @@ jobs:
         name: Build Game Windows
         shell: msys2 {0}
         run: |
-          cd src/cglpSDL2
+          cd src/cglpSDL3
           mkdir build
           cd build
           cmake -G "ninja" -DUSE_VENDORED_SDL=1 ..
@@ -90,7 +90,7 @@ jobs:
       - if: ${{ matrix.runsontype != 'windows'}}
         name: Build Game Other
         run: |
-          cd src/cglpSDL2
+          cd src/cglpSDL3
           mkdir build
           cd build      
           cmake -DUSE_VENDORED_SDL=1 ..
@@ -104,7 +104,7 @@ jobs:
           mkdir "./Release/${{matrix.name}}.app/Contents"
           mkdir "./Release/${{matrix.name}}.app/Contents/MacOS"
           mkdir "./Release/${{matrix.name}}.app/Contents/Resources"
-          cp "src/cglpSDL2/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
+          cp "src/cglpSDL3/build/${{matrix.name}}" "./Release/${{matrix.name}}.app/Contents/MacOS/${{matrix.name}}"
           cp ./README.md "./Release/"
           cp ./LICENSE.txt "./Release/"
           
@@ -129,9 +129,9 @@ jobs:
           echo "<plist version='1.0'>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "  <dict>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "    <key>CFBundleExecutable</key>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
-          echo "    <string>CglpSDL2</string>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
+          echo "    <string>CglpSDL3</string>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "    <key>CFBundleIdentifier</key>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
-          echo "    <string>com.github.joyrider3774.cglpsdl2</string>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
+          echo "    <string>com.github.joyrider3774.cglpsdl3</string>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "    <key>CFBundleName</key>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "    <string>Crisp Game Library Portable</string>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "    <key>CFBundleIconFile</key>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
@@ -158,7 +158,7 @@ jobs:
         run: |
           mkdir ./Release
           mkdir "./Release/${{matrix.name}}"
-          cp "src/cglpSDL2/build/${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
+          cp "src/cglpSDL3/build/${{matrix.name}}${{matrix.binsuffix}}" "./Release/${{matrix.name}}/"
           cp ./README.md "./Release/${{matrix.name}}/"
           cp ./LICENSE.txt "./Release/${{matrix.name}}/"
           
