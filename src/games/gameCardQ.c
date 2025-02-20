@@ -24,7 +24,7 @@ static Options options = {
 };
 
 // Card number characters
-static const char* numChars[] = {
+static char* numChars[] = {
     "", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"
 };
 
