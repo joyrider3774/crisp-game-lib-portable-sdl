@@ -143,7 +143,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 	switch(Axis)
 	{
 		case SDL_GAMEPAD_AXIS_LEFTX:
-			if (abs(Value) < Input->JoystickDeadZone)
+			if (SDL_abs(Value) < Input->JoystickDeadZone)
 			{
 				Input->Buttons.ButRight = false;
 				Input->Buttons.ButLeft = false;
@@ -156,7 +156,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 			break;
 
 		case SDL_GAMEPAD_AXIS_LEFTY:
-			if (abs(Value) < Input->JoystickDeadZone)
+			if (SDL_abs(Value) < Input->JoystickDeadZone)
 			{
 				Input->Buttons.ButUp = false;
 				Input->Buttons.ButDown = false;
@@ -169,7 +169,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 			break;
 
 		case SDL_GAMEPAD_AXIS_RIGHTX:
-			if (abs(Value) < Input->JoystickDeadZone)
+			if (SDL_abs(Value) < Input->JoystickDeadZone)
 			{
 				Input->Buttons.ButRight2 = false;
 				Input->Buttons.ButLeft2 = false;
@@ -182,7 +182,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 			break;
 
 		case SDL_GAMEPAD_AXIS_RIGHTY:
-			if (abs(Value) < Input->JoystickDeadZone)
+			if (SDL_abs(Value) < Input->JoystickDeadZone)
 			{
 				Input->Buttons.ButUp2 = false;
 				Input->Buttons.ButDown2 = false;
@@ -195,7 +195,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 			break;
 
 		case SDL_GAMEPAD_AXIS_LEFT_TRIGGER:
-			if (abs(Value) < Input->TriggerDeadZone)
+			if (SDL_abs(Value) < Input->TriggerDeadZone)
 			{
 				Input->Buttons.ButLT = false;
 				return;
@@ -204,7 +204,7 @@ void CInput_HandleJoystickAxisEvent(CInput *Input, int Axis, int Value)
 			break;
 
 		case SDL_GAMEPAD_AXIS_RIGHT_TRIGGER:
-			if (abs(Value) < Input->TriggerDeadZone)
+			if (SDL_abs(Value) < Input->TriggerDeadZone)
 			{
 				Input->Buttons.ButRT = false;
 				return;
