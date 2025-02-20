@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <SDL.h>
 #include <string.h>
 #include "machineDependent.h"
@@ -990,7 +991,7 @@ void md_initView(int w, int h)
     if(!Renderer)
         return;
 
-    SDL_GetRendererOutputSize(Renderer, &WINDOW_WIDTH , &WINDOW_HEIGHT);
+    SDL_GetWindowSizeInPixels(SdlWindow, &WINDOW_WIDTH , &WINDOW_HEIGHT);
     float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
     float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
     wscale = (wscaley < wscalex) ? wscaley : wscalex;
