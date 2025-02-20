@@ -31,7 +31,18 @@ see [src/cglpSDL2](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - HiScore saving
 - Works on many chinese emulation handhelds if you crosscompile (rg35xx sp, rg35xx plus, trimui smart pro, rgb30, ..)
 
-**Prebuild versions of the SDL2 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
+see [src/cglpSDL3](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL3) for SDL 3 Port
+- keyboard, mouse or gamepads support using Gamepad Api
+- Sound support
+- Extra added games
+- Sections inside the menu's
+- Ability to have more than 16 games in the menu
+- Ability to switch between dark color mode enabled or not
+- Ability to switch between dark color mode enabled or not
+- Overlays like small glow effects, pixel grid or crt effect saved per game
+- HiScore saving
+
+**Prebuild versions of the SDL3 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
 
 Controls:
 - Keyboard Controls: X, C, S, D, G, ESC, PageUp, PageDown and arrow keys
@@ -93,7 +104,7 @@ fine on a newer os but not the other way around. I did not test the Arm versions
 - [ESPboy](https://www.espboy.com/)
 - [Funkey](https://www.funkey-project.com/)
 - [RG Nano](https://anbernic.com/products/rg-nano)
-- [SDL 1 or 2 supported device](https://www.libsdl.org/)
+- [SDL 1, 2 or 3 supported device](https://www.libsdl.org/)
 
 ## Sample game codes and reference
 
@@ -176,13 +187,13 @@ Note: Some features are limited due to device resource limitations.
 
 - [cglpFunkey](https://github.com/joyrider3774/crisp-game-lib-portable-funkey) (ported by [Joyrider3774](https://github.com/joyrider3774))
 
-### Any Device supporting SDL1 or SDL2
+### Any Device supporting SDL1, SDL2 or SDL3
 
-1. (Cross)compile using provided `Makefile` by running `make -f ./src/cglpSDL2/Makefile` or `make -f ./src/cglpSDL1/Makefile` in rootfolder of this repo or use the `CMake` with the provided `src/cglpSDL2/CMakelists` file
+1. (Cross)compile using provided `Makefile` by running `make -f ./src/cglpSDL2/Makefile` or `make -f ./src/cglpSDL1/Makefile` in rootfolder of this repo or use the `CMake` with the provided `src/cglpSDL2/CMakelists` or `src/cglpSDL3/CMakelists` file
 
 1. Checkout `binary --help` for information on commandline parameters
 
-- SDL2 port supports game controllers SDL1 port only keyboard
+- SDL2 & 3 port supports game controllers SDL1 port only keyboard
 
 - ported by [Joyrider3774](https://github.com/joyrider3774)
 
