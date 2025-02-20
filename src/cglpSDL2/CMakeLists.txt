@@ -44,6 +44,12 @@ if(TARGET SDL2::SDL2main)
     target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    SDL2::SDL2-static
-)
+if(USE_VENDORED_SDL)
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        SDL2::SDL2-static
+    )
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        SDL2::SDL2
+    )
+endif()
