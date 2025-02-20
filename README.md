@@ -42,7 +42,7 @@ see [src/cglpSDL3](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/t
 - Overlays like small glow effects, pixel grid or crt effect saved per game
 - HiScore saving
 
-**Prebuild versions of the SDL3 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
+**Prebuild versions of the SDL2 and SDL3 port are available in the [release Section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/latest/).**
 
 Controls:
 - Keyboard Controls: X, C, S, D, G, ESC, PageUp, PageDown and arrow keys
