@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <SDL.h>
 #include <string.h>
 #include "machineDependent.h"
