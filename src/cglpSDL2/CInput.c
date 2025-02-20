@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <SDL.h>
 #include <SDL_joystick.h>
 #include <math.h>
