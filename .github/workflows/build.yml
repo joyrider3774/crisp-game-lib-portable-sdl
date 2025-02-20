@@ -84,7 +84,7 @@ jobs:
           cd src/cglpSDL3
           mkdir build
           cd build
-          cmake -G "ninja" -DUSE_VENDORED_SDL=1 ..
+          cmake -G "Ninja" -DUSE_VENDORED_SDL=1 ..
           ninja
           
       - if: ${{ matrix.runsontype != 'windows'}}
