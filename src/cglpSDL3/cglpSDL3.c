@@ -1253,7 +1253,7 @@ static void printHelp(char* exe)
         ++binaryName;
 
     printf("Crisp Game Lib Portable Sdl 3 Version\n");
-    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [CGL file]  \n", binaryName);
+    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [-cgl] [CGL file]  \n", binaryName);
     printf("\n");
     printf("Commands:\n");
     printf("  -w <WIDTH>: use <WIDTH> as window width\n");
@@ -1266,6 +1266,7 @@ static void printHelp(char* exe)
     printf("  -list: List game names to be used with -g option\n");
     printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
     printf("  -ms: Make screenshot of every game\n");
+    printf("  -cgl: Generate .cgl files for all games\n");
     printf("  CGL file: Pass a .cgl file to launch a game directly\n");
 }
 
