@@ -16,6 +16,7 @@ void addGameLadderDrop();
 void addGameGrapplingH();
 void addGameInTow();
 void addGameTimberTest();
+void addGameFracave();
 
 //working
 void addGameBCannon();
@@ -72,6 +73,7 @@ void addGames() {
   addGameGrapplingH();
   addGameInTow();
   addGameTimberTest();
+  addGameFracave();
   
   //new games
   addGameSection("=======NEW=======");
