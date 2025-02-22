@@ -122,16 +122,16 @@ jobs:
           
           #for PNG
           mkdir icon.iconset
-          sips -z 16 16 "./meta/icon.png" --out icon.iconset/icon_16x16.png
-          sips -z 32 32 "./meta/icon.png" --out icon.iconset/icon_16x16@2x.png
-          sips -z 32 32 "./meta/icon.png" --out icon.iconset/icon_32x32.png
-          sips -z 64 64 "./meta/icon.png" --out icon.iconset/icon_32x32@2x.png
-          sips -z 128 128 "./meta/icon.png" --out icon.iconset/icon_128x128.png
-          sips -z 256 256 "./meta/icon.png" --out icon.iconset/icon_128x128@2x.png
-          sips -z 256 256 "./meta/icon.png" --out icon.iconset/icon_256x256.png
-          sips -z 512 512 "./meta/icon.png" --out icon.iconset/icon_256x256@2x.png
-          sips -z 512 512 "./meta/icon.png" --out icon.iconset/icon_512x512.png
-          sips -z 1024 1024 "./meta/icon.png" --out icon.iconset/icon_512x512@2x.png
+          sips -z 16 16 "./metadata/icon.png" --out icon.iconset/icon_16x16.png
+          sips -z 32 32 "./metadata/icon.png" --out icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 "./metadata/icon.png" --out icon.iconset/icon_32x32.png
+          sips -z 64 64 "./metadata/icon.png" --out icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 "./metadata/icon.png" --out icon.iconset/icon_128x128.png
+          sips -z 256 256 "./metadata/icon.png" --out icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 "./metadata/icon.png" --out icon.iconset/icon_256x256.png
+          sips -z 512 512 "./metadata/icon.png" --out icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 "./metadata/icon.png" --out icon.iconset/icon_512x512.png
+          sips -z 1024 1024 "./metadata/icon.png" --out icon.iconset/icon_512x512@2x.png
           iconutil -c icns icon.iconset -o ./icon.icns
           mv ./icon.icns "./Release/${{matrix.name}}.app/Contents/Resources/icon.icns"
           
@@ -161,9 +161,9 @@ jobs:
           echo "  </dict>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           echo "</plist>" >> "./Release/${{matrix.name}}.app/Contents/Info.plist"
           
-          cp -r "meta/cgl files" "./Release/"
-          cp -r "meta/screenshots" "./Release/"
-          cp "meta/cglpsdl1-preview.png" "./Release/cglpsdl1-preview.png"
+          cp -r "metadata/cgl files" "./Release/"
+          cp -r "metadata/screenshots" "./Release/"
+          cp "metadata/cglpsdl1-preview.png" "./Release/cglpsdl1-preview.png"
           
       - if: ${{ matrix.runsontype != 'mac'}}
         name: Copy Game And Assets Other
@@ -176,9 +176,9 @@ jobs:
           
       - if: ${{ matrix.runsontype != 'mac'}}
         run: |
-          cp -r "meta/cgl files" "./Release/${{matrix.name}}/"
-          cp -r "meta/screenshots" "./Release/${{matrix.name}}/"
-          cp "meta/cglpsdl1-preview.png" "./Release/${{matrix.name}}/cglpsdl1-preview.png"
+          cp -r "metadata/cgl files" "./Release/${{matrix.name}}/"
+          cp -r "metadata/screenshots" "./Release/${{matrix.name}}/"
+          cp "metadata/cglpsdl1-preview.png" "./Release/${{matrix.name}}/cglpsdl1-preview.png"
          
       - name: Store build
         uses: actions/upload-artifact@v4
