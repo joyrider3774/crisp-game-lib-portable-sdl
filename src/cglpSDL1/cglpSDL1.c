@@ -1185,13 +1185,17 @@ static void update()
         char fpsText[10];
         sprintf(fpsText, "%.2f", avgfps);
         int prev = color;
+        CharacterOptions prevCharOptions = characterOptions;
+        characterOptions.isMirrorX = false;
+        characterOptions.isMirrorY = false;
+        characterOptions.rotation = 0;
         color = BLACK;
         rect(0,0,strlen(fpsText)*6, 6);
         color = WHITE;
         text(fpsText, 2, 3);
+        characterOptions = prevCharOptions;
         color = prev;
     }
-
     Uint32 currentCrtTime = SDL_GetTicks();
     float deltaTime = (currentCrtTime - lastCrtTime) / 1000.0f;
     lastCrtTime = currentCrtTime;
