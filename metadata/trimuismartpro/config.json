@@ -1,0 +1,8 @@
+{
+"package":"io.github.joyrider3774.cglpSDL2",
+"label":"cglpSDL2",
+"icon":"icon.png",
+"iconsel":"icon.png",
+"launch":"launch.sh",
+"description":"Crisp Games Library Portable"
+}
