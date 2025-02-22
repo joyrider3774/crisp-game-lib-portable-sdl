@@ -77,16 +77,16 @@ Macos prebuild binaries are now available as well for different os and architect
 fine on a newer macos if you keep using same architecture but not the other way around. I personally tested the mac os intel builds (not arm ones) on mac os sequoia 15.2 i did not test the arm versions.
 However due to apple requiring signed and notarized binaries, macos will probably prevent you from running the app bundle directly and display a message like in the screenshot below
 
-<img src="meta/mac_gatekeeper1.png">
+<img src="metadata/mac_gatekeeper1.png">
 
 If this happens you need to go to `system settings` in the `privacy and security` section and scroll all the way down, there will be an entry there where you can unblock it as you can see in 
 screenshot below
 
-<img src="meta/mac_gatekeeper2.png">
+<img src="metadata/mac_gatekeeper2.png">
 
 once you click allow it will show a new dialog where you choose to open the binary, but you may have to provide the administrator password. 
 
-<img src="meta/mac_gatekeeper3.png">
+<img src="metadata/mac_gatekeeper3.png">
 
 once you have done this a single time it won't ask about this again.
 
