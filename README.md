@@ -49,17 +49,23 @@ Controls:
 - Game Pad (XBox) Controls: A, B, X, Y, Start, Back, LB, RB and Joystick or dpad
 
 Commandline parameters:
-- -f: Run fullscreen windowed (desktop resolution)
-- -w XXX: use window width XXX
-- -h YYY: use window height YYY
-- -ns: no sound
-- -a: use accelerated renderer (by default software renderer is used)
-- -fps: show fps
-- -nd: no fps delay (run as fast as possible)
-- -list: List game names to be used with -g option
-- -g <GAMENAME>: run game <GAMENAME> only
-- -ms: Make screenshot of every game
-- -cgl: create fake <GAMENAME>.cgl rom files which can be used as a parameter to launch the games
+
+Usage: `CglpSDL3.exe [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [-cgl] [-nsd] [CGL file]`
+
+Commands:
+- `-f`: Run fullscreen windowed (desktop resolution)
+- `-w XXX`: use window width XXX
+- `-h YYY`: use window height YYY
+- `-ns`: no sound
+- `-a`: use accelerated renderer (by default software renderer is used)
+- `-fps`: show fps
+- `-nd`: no fps delay (run as fast as possible)
+- `-list`: List game names to be used with -g option
+- `-g <GAMENAME>`: run game <GAMENAME> only
+- `-ms`: Make screenshot of every game
+- `-cgl`: create fake <GAMENAME>.cgl rom files which can be used as a parameter to launch the games
+- `-nsd`: No scaled drawing (scales the view, instead of drawing scaled, is faster but disables overlays, glow etc)
+- `CGL file`: Pass a .cgl file to launch a game directly
 
 **Windows Prebuild Versions**
 

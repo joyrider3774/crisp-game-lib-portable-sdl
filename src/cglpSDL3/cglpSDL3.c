@@ -62,6 +62,8 @@ static int quit = 0;
 static float scale = 1.0f;
 static int viewW = DEFAULT_WINDOW_WIDTH;
 static int viewH = DEFAULT_WINDOW_HEIGHT;
+static int realViewW = DEFAULT_WINDOW_WIDTH;
+static int realViewH = DEFAULT_WINDOW_HEIGHT;
 static int origViewW = DEFAULT_WINDOW_WIDTH;
 static int origViewH = DEFAULT_WINDOW_HEIGHT;
 static Uint64 frameticks = 0;
@@ -95,6 +97,7 @@ static int lastfpstime = 0;
 static int fpsAvgCount = 0;
 
 static Uint64 lastCrtTime = 0;
+static bool scaledDrawing = true;
 
 typedef struct {
     float frequency; // Frequency of the note in Hz
@@ -162,8 +165,16 @@ static void resetGame(Game *game)
 
         if ((SDL_strlen(gameOverLays[i].title) > 0) && (SDL_strcmp(game->title, gameOverLays[i].title) == 0 ))
         {
-            overlay = gameOverLays[i].overlay;
-            glowEnabled = gameOverLays[i].glowEnabled;
+            if(scaledDrawing)
+            {
+                overlay = gameOverLays[i].overlay;
+                glowEnabled = gameOverLays[i].glowEnabled;
+            }
+            else
+            {
+                overlay = 0;
+                glowEnabled = false;
+            }
             game->options.isDarkColor = gameOverLays[i].isDarkColor;
             return;
         }
@@ -1012,6 +1023,8 @@ void md_initView(int w, int h)
     viewH = (int)ceilf((float)h * scale);
     offsetX = (int)(WINDOW_WIDTH - viewW) >> 1;
     offsetY = (int)(WINDOW_HEIGHT - viewH) >> 1;
+    realViewW = viewW;
+    realViewH = viewH;
     
     float gScaleX =  (float)w / 100.0f ;
     float gScaleY =  (float)h / 100.0f ;
@@ -1022,6 +1035,16 @@ void md_initView(int w, int h)
         gScale = gScaleX;
     glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
     
+    if(!scaledDrawing)
+    {
+        viewW = w;
+        viewH = h;
+        glowSize = 2.0f;
+        scale = 1.0f;
+    }
+    
+    // SDL_Log("md_initView: window size: %dx%d requested view size: %dx%d adjusted view size %dx%d scale:%3f\n", WINDOW_WIDTH, WINDOW_HEIGHT, w, h, viewW, viewH, scale);
+
     // Cleanup existing resources
     cleanupView();
     
@@ -1034,6 +1057,8 @@ void md_initView(int w, int h)
             PIXELFORMAT,
             SDL_TEXTUREACCESS_STREAMING,
             viewW, viewH);
+        if(viewTexture)
+            SDL_SetTextureScaleMode(viewTexture, SDL_SCALEMODE_NEAREST);
         if(crtEffect)
         {
             DestroyCRTEffect(crtEffect);
@@ -1097,7 +1122,7 @@ static void update() {
 
     if ((!GameInput->PrevButtons.ButX) && (GameInput->Buttons.ButX))
     {
-        if(!isInMenu)
+        if(!isInMenu && scaledDrawing)
         {
             if (overlay == 0)
             {
@@ -1157,7 +1182,7 @@ static void update() {
     }
 
     updateFrame();
-    if(!isInMenu && (overlay == 1))
+    if(scaledDrawing && !isInMenu && (overlay == 1))
     {
         SDL_Rect dst = { 0 };
 
@@ -1201,7 +1226,7 @@ static void update() {
         Uint64 currentCrtTime = SDL_GetTicks();
         float deltaTime = (currentCrtTime - lastCrtTime) / 1000.0f;
         lastCrtTime = currentCrtTime;
-        if(!isInGameOver && (overlay == 2) && !isInMenu)
+        if(scaledDrawing && !isInGameOver && (overlay == 2) && !isInMenu)
         {
             UpdateCRTEffect(crtEffect, deltaTime);
             RenderCRTEffect(view, crtEffect);
@@ -1213,7 +1238,7 @@ static void update() {
         SDL_RenderClear(Renderer);
         
         // Draw the view texture
-        SDL_FRect dst = {offsetX, offsetY, viewW, viewH};
+        SDL_FRect dst = {offsetX, offsetY, realViewW, realViewH};
         SDL_RenderTexture(Renderer, viewTexture, NULL, &dst);
 
         // Present the renderer
@@ -1253,7 +1278,7 @@ static void printHelp(char* exe)
         ++binaryName;
 
     printf("Crisp Game Lib Portable Sdl 3 Version\n");
-    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [-cgl] [CGL file]  \n", binaryName);
+    printf("Usage: %s [-w <WIDTH>] [-h <HEIGHT>] [-f] [-ns] [-a] [-fps] [-nd] [-g <GAMENAME>] [-ms] [-cgl] [-nsd] [CGL file]  \n", binaryName);
     printf("\n");
     printf("Commands:\n");
     printf("  -w <WIDTH>: use <WIDTH> as window width\n");
@@ -1267,6 +1292,7 @@ static void printHelp(char* exe)
     printf("  -g <GAMENAME>: run game <GAMENAME> only\n");
     printf("  -ms: Make screenshot of every game\n");
     printf("  -cgl: Generate .cgl files for all games\n");
+    printf("  -nsd: No scaled drawing (scales the view, instead of drawing scaled, is faster but disables overlays, glow etc)\n");
     printf("  CGL file: Pass a .cgl file to launch a game directly\n");
 }
 
@@ -1297,6 +1323,7 @@ int main(int argc, char** argv)
     bool useHWSurface = false;
     bool noAudioInit = false;
     bool makescreenshots = false;
+    scaledDrawing = true;
     for (int i = 0; i < argc; i++)
     {
         //SDL_Log("param %d %s\n", i, argv[i]);
@@ -1376,6 +1403,9 @@ int main(int argc, char** argv)
                 memset(startgame, 0, 100);
                 strcpy(startgame, argv[i+1]);
             }
+
+        if(SDL_strcmp(argv[i], "-nsd") == 0)
+            scaledDrawing = false;
         
         if(SDL_strcmp(argv[i], "-list") == 0)
         {
@@ -1411,7 +1441,7 @@ int main(int argc, char** argv)
             {
                 SDL_SetWindowFullscreen(SdlWindow, true);
             }
-            SDL_AddEventWatch(resizingEventWatcher, SdlWindow);           
+            SDL_AddEventWatch(resizingEventWatcher, SdlWindow);
             SDL_Log("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
             if (useHWSurface == 0)
                 Renderer = SDL_CreateRenderer(SdlWindow, SDL_SOFTWARE_RENDERER);
@@ -1471,7 +1501,7 @@ int main(int argc, char** argv)
                 loadGameOverlays();
 	            if (startgame[0] != 0)
 	            {
-	                SDL_Log("Start Game: %s", startgame);
+	                SDL_Log("Start Game: %s\n", startgame);
 	                bool found = false;
 	                for (int i = 0; i < gameCount; i++)
 	                {
