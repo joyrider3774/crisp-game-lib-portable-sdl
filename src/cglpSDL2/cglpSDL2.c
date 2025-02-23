@@ -38,6 +38,7 @@
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
+#define SOUND_CHANNELS 1
 #define MAX_NOTES 128
 #define AMPLITUDE 10000
 #define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
@@ -150,6 +151,18 @@ AudioState audio_state = {0};
 
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
+
+static void logMessage(SDL_PRINTF_FORMAT_STRING const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+#if defined _WIN32 || defined __CYGWIN__
+    vprintf(fmt, ap);
+#else
+    SDL_LogMessageV(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO, fmt, ap);
+#endif    
+    va_end(ap);   
+}
 
 static void resetGame(Game *game)
 {
@@ -491,107 +504,109 @@ static float generateSineWave(float frequency, TimerType ticks)
 // Audio callback
 static void audio_callback(void *userdata, Uint8 *stream, int len)
 {
-   AudioState *audio_state = (AudioState *)userdata;
-   Sint16 *buffer = (Sint16 *)stream;
-   int sample_count = len / sizeof(Sint16);
-   // Intermediate float buffer to accumulate the summed waveforms
-   float* float_buffer = (float*)malloc(sample_count * sizeof(float));
-   if (float_buffer == NULL)
-       return;
+    AudioState *audio_state = (AudioState *)userdata;
+    Sint16 *buffer = (Sint16 *)stream;
+    int sample_count = (len / sizeof(Sint16));
+    // Intermediate float buffer to accumulate the summed waveforms
+    float* float_buffer = (float*)malloc(sample_count * sizeof(float));
+    if (float_buffer == NULL)
+        return;
  
-   memset(float_buffer, 0, sample_count * sizeof(float));
+    memset(float_buffer, 0, sample_count * sizeof(float));
    
-   // Track active notes
-   int active_note_count = 0;
+    // Track active notes
+    int active_note_count = 0;
 
 
-   for (int i = 0; i < audio_state->note_count; i++) 
-   {
-       Note *note = &audio_state->notes[i];
+    for (int i = 0; i < audio_state->note_count; i++) 
+    {
+        Note *note = &audio_state->notes[i];
        
-       // Convert note start time to current time context
-       TimerType note_start_sample = timeToSample(note->when);
-       float current_sample_time = sampleToTime(audio_state->time);
+        // Convert note start time to current time context
+        TimerType note_start_sample = timeToSample(note->when);
+        float current_sample_time = sampleToTime(audio_state->time);
        
-       if (!note->active && current_sample_time >= note->when) 
-       {
-           note->active = true;
-       }
+        if (!note->active && current_sample_time >= note->when) 
+        {
+            note->active = true;
+        }
 
-       if (note->active) 
-       {
-           // Determine if note should be deactivated
-           if (current_sample_time > note->when + note->duration + FADE_OUT_TIME) 
-           {
-               note->active = false; // Mark note as inactive after fade-out
-               continue; // Skip to the next note
-           }
+        if (note->active) 
+        {
+            // Determine if note should be deactivated
+            if (current_sample_time > note->when + note->duration + FADE_OUT_TIME) 
+            {
+                note->active = false; // Mark note as inactive after fade-out
+                continue; // Skip to the next note
+            }
            
-           // Sum of all active notes' waveforms
-           for (int j = 0; j < sample_count; j++) 
-           {
-               TimerType current_sample = audio_state->time + j;
-               float sample_time = sampleToTime(current_sample);
-               float amplitude = audioVolume;
+            // Sum of all active notes' waveforms
+            for (int j = 0; j < sample_count / audiospec.channels; j++) 
+            {
+                TimerType current_sample = audio_state->time + j;
+                float sample_time = sampleToTime(current_sample);
+                float amplitude = audioVolume;
 
-               float note_end_time = note->when + note->duration;
+                float note_end_time = note->when + note->duration;
 
-               // Fade out ending notes
-               if (sample_time > note_end_time) 
-               {
-                   float fade_progress = (sample_time - note_end_time) / FADE_OUT_TIME;
-                   amplitude *= (1.0f - fade_progress);
-                   if (amplitude < 0.0f) 
-                       amplitude = 0.0f;
-               }
+                // Fade out ending notes
+                if (sample_time > note_end_time) 
+                {
+                    float fade_progress = (sample_time - note_end_time) / FADE_OUT_TIME;
+                    amplitude *= (1.0f - fade_progress);
+                    if (amplitude < 0.0f) 
+                        amplitude = 0.0f;
+                }
 				
-			   // Add this note's waveform to the float buffer
-               // Use sample time for wave generation
-               float_buffer[j] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
-           }
-       }
+			    // Add this note's waveform to the float buffer
+                // Use sample time for wave generation
+                float_buffer[j*audiospec.channels] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
+                for(int chan = 1 ; chan < audiospec.channels; chan++)
+                    float_buffer[j*audiospec.channels + chan] = float_buffer[j*audiospec.channels];
+            }
+        }
 
-       // Always add notes that are either active or scheduled for the future
-       if (note->active || (note_start_sample > audio_state->time)) 
-       {
-           audio_state->notes[active_note_count++] = *note;
-       }
-   }
+        // Always add notes that are either active or scheduled for the future
+        if (note->active || (note_start_sample > audio_state->time)) 
+        {
+            audio_state->notes[active_note_count++] = *note;
+        }
+    }
 
     // Update the note count to reflect only active notes
     audio_state->note_count = active_note_count;
 
-   // Find the maximum amplitude in the float buffer and normalize
-   float max_amplitude = 0.0f;
-   for (int i = 0; i < sample_count; i++) 
-   {
-       if (float_buffer[i] > max_amplitude) 
-           max_amplitude = float_buffer[i];
-       if (float_buffer[i] < -max_amplitude) 
-           max_amplitude = -float_buffer[i];
-   }
+    // Find the maximum amplitude in the float buffer and normalize
+    float max_amplitude = 0.0f;
+    for (int i = 0; i < sample_count; i++) 
+    {
+        if (float_buffer[i] > max_amplitude) 
+            max_amplitude = float_buffer[i];
+        if (float_buffer[i] < -max_amplitude) 
+            max_amplitude = -float_buffer[i];
+    }
 
-   // If the maximum amplitude exceeds the allowed range, scale it down
-   if (max_amplitude > 32767.0f) 
-   {
-       float scale_factor = 32767.0f / max_amplitude;
-       for (int i = 0; i < sample_count; i++) 
-       {
-	       // Normalize and directly convert to Sint16
-           buffer[i] = (Sint16)(float_buffer[i] * scale_factor);
-       }
-   } 
-   else 
-   {
-       // If there's no clipping, just convert to Sint16 directly
-       for (int i = 0; i < sample_count; i++) 
-       {
-           buffer[i] = (Sint16)float_buffer[i];
-       }
-   }
+    // If the maximum amplitude exceeds the allowed range, scale it down
+    if (max_amplitude > 32767.0f) 
+    {
+        float scale_factor = 32767.0f / max_amplitude;
+        for (int i = 0; i < sample_count; i++) 
+        {
+	        // Normalize and directly convert to Sint16
+            buffer[i] = (Sint16)(float_buffer[i] * scale_factor);
+        }
+    } 
+    else 
+    {
+        // If there's no clipping, just convert to Sint16 directly
+        for (int i = 0; i < sample_count; i++) 
+        {
+            buffer[i] = (Sint16)float_buffer[i];
+        }
+    }
 
-   audio_state->time += sample_count;
-   free(float_buffer);
+    audio_state->time += sample_count / audiospec.channels;
+    free(float_buffer);
 }
 
 static void schedule_note(AudioState *audio_state, float frequency, float when, float duration)
@@ -632,18 +647,22 @@ static int InitAudio()
 {
 	SDL_AudioSpec spec = {0};
     spec.freq = SAMPLE_RATE;
-    spec.format = AUDIO_S16SYS; // Use signed 16-bit audio
-    spec.channels = 1;         // Mono audio
+    spec.format = AUDIO_S16SYS;
+    spec.channels = SOUND_CHANNELS; 
     spec.samples = BUFFER_SIZE;
     spec.callback = audio_callback;
     spec.userdata = &audio_state;
-	audioDevice = SDL_OpenAudioDevice(NULL, 0, &spec, &audiospec, 0 );
+	audioDevice = SDL_OpenAudioDevice(NULL, 0, &spec, &audiospec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE );
     if(audioDevice == 0)
 		return -1;
 
-	if(audiospec.format != AUDIO_S16SYS)
+    logMessage("Requested audio specs: format: %d, freq: %d, channels: %d, frames:%d\n", spec.format, spec.freq, spec.channels, spec.samples);
+    logMessage("Obtained audio specs:  format: %d, freq: %d, channels: %d, frames:%d\n", audiospec.format, audiospec.freq, audiospec.channels, audiospec.samples);   
+
+	if(audiospec.format != spec.format)
     {
         SDL_CloseAudioDevice(audioDevice);
+        logMessage("Wrong Audio format obtained!\n");
 		return -1;
     }
 
@@ -1046,7 +1065,7 @@ void md_initView(int w, int h)
         scale = 1.0f;
     }
     
-    //SDL_Log("md_initView: window size: %dx%d requested view size: %dx%d adjusted view size %dx%d scale:%3f\n", WINDOW_WIDTH, WINDOW_HEIGHT, w, h, viewW, viewH, scale);
+    //logMessage("md_initView: window size: %dx%d requested view size: %dx%d adjusted view size %dx%d scale:%3f\n", WINDOW_WIDTH, WINDOW_HEIGHT, w, h, viewW, viewH, scale);
 
     // Cleanup existing resources
     cleanupView();
@@ -1075,7 +1094,7 @@ void md_initView(int w, int h)
 
 void md_consoleLog(char* msg) 
 { 
-    SDL_Log(msg); 
+    logMessage(msg); 
 }
 
 static void update() {
@@ -1314,15 +1333,13 @@ void SDL_Cleanup()
 
 int main(int argc, char** argv)
 {
-//attach to potential console when using -mwindows and redefine SDL_Log to printf
-//so we can get output in a cmd / msys prompt but see no console window when running 
-//from explorer start menu or so
+//attach to potential console when using -mwindows so we can get output in a cmd / msys prompt 
+//but see no console window when running from explorer start menu or so
 #if defined _WIN32 || defined __CYGWIN__
     if(AttachConsole((DWORD)-1))
     {
         freopen("CON", "w", stderr);
         freopen("CON", "w", stdout);
-        #define SDL_Log printf
     }
 #endif
     bool fullScreen = false;
@@ -1332,7 +1349,7 @@ int main(int argc, char** argv)
     scaledDrawing = true;
     for (int i = 0; i < argc; i++)
     {
-        //SDL_Log("param %d %s\n", i, argv[i]);
+        //logMessage("param %d %s\n", i, argv[i]);
         char* ext = strrchr(argv[i], '.');
         if (ext != NULL)
         {
@@ -1423,7 +1440,7 @@ int main(int argc, char** argv)
                 if(getGame(i).update != NULL)
                 {
                     counter++;
-                    SDL_Log("%d. %s\n", counter, getGame(i).title);
+                    logMessage("%d. %s\n", counter, getGame(i).title);
                 }
             }
             return 0;
@@ -1436,7 +1453,7 @@ int main(int argc, char** argv)
 
     if (SDL_Init(SDL_INIT_VIDEO) == 0)
     {
-        SDL_Log("SDL Succesfully initialized\n");
+        logMessage("SDL Succesfully initialized\n");
         atexit(SDL_Cleanup);
         Uint32 WindowFlags = SDL_WINDOW_RESIZABLE;
         if (fullScreen)
@@ -1455,13 +1472,13 @@ int main(int argc, char** argv)
             else
                 flags |= SDL_RENDERER_ACCELERATED;
 
-            SDL_Log("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
+            logMessage("Succesfully Set %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
             Renderer = SDL_CreateRenderer(SdlWindow, -1, flags);
             if (Renderer)
             {
                 SDL_RendererInfo rendererInfo;
                 SDL_GetRendererInfo(Renderer, &rendererInfo);
-                SDL_Log("Using Renderer:%s\n", rendererInfo.name);
+                logMessage("Using Renderer:%s\n", rendererInfo.name);
                 char RenderDriverNames[1000];
                 memset(RenderDriverNames, 0, 1000);
                 for (int i = 0; i < SDL_GetNumRenderDrivers(); i++)
@@ -1474,8 +1491,8 @@ int main(int argc, char** argv)
                         strcat(RenderDriverNames, info.name);
                     }
                 }
-                SDL_Log("Available Renders: %s\n", RenderDriverNames);
-                SDL_Log("Succesfully Created Buffer\n");
+                logMessage("Available Renders: %s\n", RenderDriverNames);
+                logMessage("Succesfully Created Buffer\n");
                 initCharacterSprite();
                 initGame();
                 if(makescreenshots)
@@ -1501,21 +1518,38 @@ int main(int argc, char** argv)
                 if(!noAudioInit)
                 {
                     if(SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
-                        SDL_Log("Failed to open audio: %s\n", SDL_GetError());
+                        logMessage("Failed to open audio: %s\n", SDL_GetError());
                     else
                     {
+                        
+                        const char* audioName = SDL_GetCurrentAudioDriver();
+                        if(audioName)
+                            logMessage("Using Audio Driver:%s\n", audioName);
+                        char AudioDriverNames[1000];
+                        memset(AudioDriverNames, 0, 1000);
+                        for (int i = 0; i < SDL_GetNumAudioDrivers(); i++)
+                        {
+                            audioName = SDL_GetAudioDriver(i);
+                            if (audioName)
+                            {
+                                if(i > 0)
+                                    strcat(AudioDriverNames, ",");
+                                strcat(AudioDriverNames, audioName);
+                            }
+                        }
+                        logMessage("Available Audio Drivers: %s\n", AudioDriverNames);
                         soundOn = InitAudio();
                         if(soundOn == 1)
-                            SDL_Log("Succesfully opened audio\n");
+                            logMessage("Succesfully opened audio\n");
                         else
-                            SDL_Log("Failed to open audio\n");
+                            logMessage("Failed to open audio\n");
                     }
                 }
                 loadHighScores();
                 loadGameOverlays();
 	            if (startgame[0] != 0)
 	            {
-	                SDL_Log("Start Game: %s\n", startgame);
+	                logMessage("Start Game: %s\n", startgame);
 	                bool found = false;
 	                for (int i = 0; i < gameCount; i++)
 	                {
@@ -1588,18 +1622,18 @@ int main(int argc, char** argv)
             }
             else
             {
-                SDL_Log("Failed to created Renderer!\n");
+                logMessage("Failed to created Renderer!\n");
             }
             SDL_DestroyWindow(SdlWindow);
         }		
         else
         {
-            SDL_Log("Failed to create SDL_Window %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
+            logMessage("Failed to create SDL_Window %dx%d\n",WINDOW_WIDTH, WINDOW_HEIGHT);
         }
     }
     else
     {
-        SDL_Log("Couldn't initialise SDL!\n");
+        logMessage("Couldn't initialise SDL!\n");
     }
     return 0;
 

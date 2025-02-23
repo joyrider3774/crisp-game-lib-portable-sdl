@@ -40,6 +40,7 @@
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
+#define SOUND_CHANNELS 1
 #define MAX_NOTES 128
 #define AMPLITUDE 10000
 #define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
@@ -471,107 +472,109 @@ static float generateSineWave(float frequency, TimerType ticks)
 // Audio callback
 static void audio_callback(void *userdata, Uint8 *stream, int len)
 {
-   AudioState *audio_state = (AudioState *)userdata;
-   Sint16 *buffer = (Sint16 *)stream;
-   int sample_count = len / sizeof(Sint16);
-   // Intermediate float buffer to accumulate the summed waveforms
-   float* float_buffer = (float*)malloc(sample_count * sizeof(float));
-   if (float_buffer == NULL)
-       return;
+    AudioState *audio_state = (AudioState *)userdata;
+    Sint16 *buffer = (Sint16 *)stream;
+    int sample_count = (len / sizeof(Sint16));
+    // Intermediate float buffer to accumulate the summed waveforms
+    float* float_buffer = (float*)malloc(sample_count * sizeof(float));
+    if (float_buffer == NULL)
+        return;
  
-   memset(float_buffer, 0, sample_count * sizeof(float));
+    memset(float_buffer, 0, sample_count * sizeof(float));
    
-   // Track active notes
-   int active_note_count = 0;
+    // Track active notes
+    int active_note_count = 0;
 
 
-   for (int i = 0; i < audio_state->note_count; i++) 
-   {
-       Note *note = &audio_state->notes[i];
+    for (int i = 0; i < audio_state->note_count; i++) 
+    {
+        Note *note = &audio_state->notes[i];
        
-       // Convert note start time to current time context
-       TimerType note_start_sample = timeToSample(note->when);
-       float current_sample_time = sampleToTime(audio_state->time);
+        // Convert note start time to current time context
+        TimerType note_start_sample = timeToSample(note->when);
+        float current_sample_time = sampleToTime(audio_state->time);
        
-       if (!note->active && current_sample_time >= note->when) 
-       {
-           note->active = true;
-       }
+        if (!note->active && current_sample_time >= note->when) 
+        {
+            note->active = true;
+        }
 
-       if (note->active) 
-       {
-           // Determine if note should be deactivated
-           if (current_sample_time > note->when + note->duration + FADE_OUT_TIME) 
-           {
-               note->active = false; // Mark note as inactive after fade-out
-               continue; // Skip to the next note
-           }
+        if (note->active) 
+        {
+            // Determine if note should be deactivated
+            if (current_sample_time > note->when + note->duration + FADE_OUT_TIME) 
+            {
+                note->active = false; // Mark note as inactive after fade-out
+                continue; // Skip to the next note
+            }
            
-           // Sum of all active notes' waveforms
-           for (int j = 0; j < sample_count; j++) 
-           {
-               TimerType current_sample = audio_state->time + j;
-               float sample_time = sampleToTime(current_sample);
-               float amplitude = audioVolume;
+            // Sum of all active notes' waveforms
+            for (int j = 0; j < sample_count / audiospec.channels; j++) 
+            {
+                TimerType current_sample = audio_state->time + j;
+                float sample_time = sampleToTime(current_sample);
+                float amplitude = audioVolume;
 
-               float note_end_time = note->when + note->duration;
+                float note_end_time = note->when + note->duration;
 
-               // Fade out ending notes
-               if (sample_time > note_end_time) 
-               {
-                   float fade_progress = (sample_time - note_end_time) / FADE_OUT_TIME;
-                   amplitude *= (1.0f - fade_progress);
-                   if (amplitude < 0.0f) 
-                       amplitude = 0.0f;
-               }
+                // Fade out ending notes
+                if (sample_time > note_end_time) 
+                {
+                    float fade_progress = (sample_time - note_end_time) / FADE_OUT_TIME;
+                    amplitude *= (1.0f - fade_progress);
+                    if (amplitude < 0.0f) 
+                        amplitude = 0.0f;
+                }
 				
-			   // Add this note's waveform to the float buffer
-               // Use sample time for wave generation
-               float_buffer[j] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
-           }
-       }
+			    // Add this note's waveform to the float buffer
+                // Use sample time for wave generation
+                float_buffer[j*audiospec.channels] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
+                for(int chan = 1 ; chan < audiospec.channels; chan++)
+                    float_buffer[j*audiospec.channels + chan] = float_buffer[j*audiospec.channels];
+            }
+        }
 
-       // Always add notes that are either active or scheduled for the future
-       if (note->active || (note_start_sample > audio_state->time)) 
-       {
-           audio_state->notes[active_note_count++] = *note;
-       }
-   }
+        // Always add notes that are either active or scheduled for the future
+        if (note->active || (note_start_sample > audio_state->time)) 
+        {
+            audio_state->notes[active_note_count++] = *note;
+        }
+    }
 
     // Update the note count to reflect only active notes
     audio_state->note_count = active_note_count;
 
-   // Find the maximum amplitude in the float buffer and normalize
-   float max_amplitude = 0.0f;
-   for (int i = 0; i < sample_count; i++) 
-   {
-       if (float_buffer[i] > max_amplitude) 
-           max_amplitude = float_buffer[i];
-       if (float_buffer[i] < -max_amplitude) 
-           max_amplitude = -float_buffer[i];
-   }
+    // Find the maximum amplitude in the float buffer and normalize
+    float max_amplitude = 0.0f;
+    for (int i = 0; i < sample_count; i++) 
+    {
+        if (float_buffer[i] > max_amplitude) 
+            max_amplitude = float_buffer[i];
+        if (float_buffer[i] < -max_amplitude) 
+            max_amplitude = -float_buffer[i];
+    }
 
-   // If the maximum amplitude exceeds the allowed range, scale it down
-   if (max_amplitude > 32767.0f) 
-   {
-       float scale_factor = 32767.0f / max_amplitude;
-       for (int i = 0; i < sample_count; i++) 
-       {
-	       // Normalize and directly convert to Sint16
-           buffer[i] = (Sint16)(float_buffer[i] * scale_factor);
-       }
-   } 
-   else 
-   {
-       // If there's no clipping, just convert to Sint16 directly
-       for (int i = 0; i < sample_count; i++) 
-       {
-           buffer[i] = (Sint16)float_buffer[i];
-       }
-   }
+    // If the maximum amplitude exceeds the allowed range, scale it down
+    if (max_amplitude > 32767.0f) 
+    {
+        float scale_factor = 32767.0f / max_amplitude;
+        for (int i = 0; i < sample_count; i++) 
+        {
+	        // Normalize and directly convert to Sint16
+            buffer[i] = (Sint16)(float_buffer[i] * scale_factor);
+        }
+    } 
+    else 
+    {
+        // If there's no clipping, just convert to Sint16 directly
+        for (int i = 0; i < sample_count; i++) 
+        {
+            buffer[i] = (Sint16)float_buffer[i];
+        }
+    }
 
-   audio_state->time += sample_count;
-   free(float_buffer);
+    audio_state->time += sample_count / audiospec.channels;
+    free(float_buffer);
 }
 
 static void schedule_note(AudioState *audio_state, float frequency, float when, float duration)
@@ -612,8 +615,8 @@ static int InitAudio()
 {
 	SDL_AudioSpec spec = {0};
     spec.freq = SAMPLE_RATE;
-    spec.format = AUDIO_S16SYS; // Use signed 16-bit audio
-    spec.channels = 1;         // Mono audio
+    spec.format = AUDIO_S16SYS;
+    spec.channels = SOUND_CHANNELS; 
     spec.samples = BUFFER_SIZE;
     spec.callback = audio_callback;
     spec.userdata = &audio_state;
@@ -621,9 +624,13 @@ static int InitAudio()
 	if(SDL_OpenAudio(&spec, &audiospec) < 0)
 		return -1;
 
-	if(audiospec.format != AUDIO_S16SYS)
+    printf("Requested audio specs: format: %d, freq: %d, channels: %d, frames:%d\n", spec.format, spec.freq, spec.channels, spec.samples);
+    printf("Obtained audio specs:  format: %d, freq: %d, channels: %d, frames:%d\n", audiospec.format, audiospec.freq, audiospec.channels, audiospec.samples);   
+
+	if(audiospec.format != spec.format)
     {
         SDL_CloseAudio();
+        printf("Wrong Audio format obtained!\n");
 		return -1;
     }
 
