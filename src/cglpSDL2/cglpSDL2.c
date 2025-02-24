@@ -38,7 +38,7 @@
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
-#define SOUND_CHANNELS 1
+#define SOUND_CHANNELS 1       // do not change it only supports MONO but sdl might convert
 #define MAX_NOTES 128
 #define AMPLITUDE 10000
 #define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
@@ -541,7 +541,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
             }
            
             // Sum of all active notes' waveforms
-            for (int j = 0; j < sample_count / audiospec.channels; j++) 
+            for (int j = 0; j < sample_count; j++) 
             {
                 TimerType current_sample = audio_state->time + j;
                 float sample_time = sampleToTime(current_sample);
@@ -560,9 +560,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
 				
 			    // Add this note's waveform to the float buffer
                 // Use sample time for wave generation
-                float_buffer[j*audiospec.channels] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
-                for(int chan = 1 ; chan < audiospec.channels; chan++)
-                    float_buffer[j*audiospec.channels + chan] = float_buffer[j*audiospec.channels];
+                float_buffer[j] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;                
             }
         }
 
@@ -605,7 +603,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
         }
     }
 
-    audio_state->time += sample_count / audiospec.channels;
+    audio_state->time += sample_count;
     free(float_buffer);
 }
 
@@ -652,20 +650,12 @@ static int InitAudio()
     spec.samples = BUFFER_SIZE;
     spec.callback = audio_callback;
     spec.userdata = &audio_state;
-	audioDevice = SDL_OpenAudioDevice(NULL, 0, &spec, &audiospec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE );
+	audioDevice = SDL_OpenAudioDevice(NULL, 0, &spec, &audiospec, 0);
     if(audioDevice == 0)
 		return -1;
 
     logMessage("Requested audio specs: format: %d, freq: %d, channels: %d, frames:%d\n", spec.format, spec.freq, spec.channels, spec.samples);
     logMessage("Obtained audio specs:  format: %d, freq: %d, channels: %d, frames:%d\n", audiospec.format, audiospec.freq, audiospec.channels, audiospec.samples);   
-
-	if(audiospec.format != spec.format)
-    {
-        SDL_CloseAudioDevice(audioDevice);
-        logMessage("Wrong Audio format obtained!\n");
-		return -1;
-    }
-
 
     SDL_PauseAudioDevice(audioDevice, 0);
 	return 1;

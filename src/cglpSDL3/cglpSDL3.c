@@ -39,7 +39,7 @@
 
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 512
-#define SOUND_CHANNELS 1
+#define SOUND_CHANNELS 1       // do not change it only supports MONO but sdl might convert
 #define MAX_NOTES 128
 #define AMPLITUDE 10000
 #define FADE_OUT_TIME 0.05f    // Fade-out time in seconds
@@ -543,7 +543,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
             }
            
             // Sum of all active notes' waveforms
-            for (int j = 0; j < sample_count / SOUND_CHANNELS; j++) 
+            for (int j = 0; j < sample_count; j++) 
             {
                 TimerType current_sample = audio_state->time + j;
                 float sample_time = sampleToTime(current_sample);
@@ -562,9 +562,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
 				
 			    // Add this note's waveform to the float buffer
                 // Use sample time for wave generation
-                float_buffer[j*SOUND_CHANNELS] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
-                for(int chan = 1 ; chan < SOUND_CHANNELS; chan++)
-                    float_buffer[j*SOUND_CHANNELS + chan] = float_buffer[j*SOUND_CHANNELS];
+                float_buffer[j] += generateSineWave(note->frequency, current_sample) * AMPLITUDE * amplitude;
             }
         }
 
@@ -607,7 +605,7 @@ static void audio_callback(void *userdata, Uint8 *stream, int len)
         }
     }
 
-    audio_state->time += sample_count / SOUND_CHANNELS;
+    audio_state->time += sample_count;
     SDL_free(float_buffer);
 }
 
