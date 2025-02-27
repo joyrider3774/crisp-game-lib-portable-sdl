@@ -242,7 +242,7 @@ static void update() {
   characterOptions.isMirrorY = false;
   
   color = BLACK;
-  snprintf(buffer, sizeof(buffer), "%dm/s", abs(ship.nextUp));
+  snprintf(buffer, sizeof(buffer), "%dm/s", (int)fabs((float)ship.nextUp));
   text(buffer, 76 - (-ship.nextUp > 9 ? 6 : 0), 31);
   character("c", 97, 30);
   
