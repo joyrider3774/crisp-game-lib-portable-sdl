@@ -57,7 +57,7 @@
 #define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
 
 static float mouseX, mouseY;
-static int prevRealMouseX = 0, prevRealMouseY = 0;
+static float prevRealMouseX = 0, prevRealMouseY = 0;
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static int quit = 0;
