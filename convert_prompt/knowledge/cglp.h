@@ -1,3 +1,4 @@
+/// \cond
 #ifndef CGLP_H
 #define CGLP_H
 
@@ -13,24 +14,7 @@
 #include <stdio.h>
 
 #include "machineDependent.h"
-
-typedef struct {
-  float x;
-  float y;
-} Vector;
-
-EXTERNC Vector* vectorSet(Vector* vec, float x, float y);
-EXTERNC Vector* vectorAdd(Vector* vec, float x, float y);
-EXTERNC Vector* vectorMul(Vector* vec, float v);
-EXTERNC Vector* rotate(Vector* vec, float angle);
-EXTERNC Vector* addWithAngle(Vector* vec, float angle, float length);
-EXTERNC float angleTo(Vector* vec, float x, float y);
-EXTERNC float distanceTo(Vector* vec, float x, float y);
-EXTERNC float vectorAngle(Vector* vec);
-EXTERNC float vectorLength(Vector* vec);
-
-//! Expand 'v' to 'v.x, v.y'
-#define VEC_XY(v) v.x, v.y
+#include "vector.h"
 
 #define FPS 60
 
@@ -74,6 +58,7 @@ EXTERNC float vectorLength(Vector* vec);
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+/// \endcond
 
 typedef struct {
   bool rect[COLOR_COUNT];
@@ -101,6 +86,7 @@ typedef struct {
   bool isPressed;
   bool isJustPressed;
   bool isJustReleased;
+  Vector pos;
 } Input;
 
 typedef struct {
@@ -116,6 +102,7 @@ typedef struct {
   int rotation;
 } CharacterOptions;
 
+/// \cond
 EXTERNC int ticks;
 EXTERNC float score;
 EXTERNC float difficulty;
@@ -166,7 +153,9 @@ EXTERNC ColorRgb colorRgbs[COLOR_COUNT];
 EXTERNC void initGame();
 EXTERNC void setButtonState(bool left, bool right, bool up, bool down, bool b,
                             bool a);
+EXTERNC void setMousePos(float x, float y);
 EXTERNC void updateFrame();
+/// \endcond
 
 //! Iterate over an `array` with variable `index`
 #define FOR_EACH(array, index) \

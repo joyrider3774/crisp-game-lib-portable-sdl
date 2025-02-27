@@ -1,4 +1,6 @@
 Your task is to port JavaScript code for the game using the crisp-game-lib library to C code using the crisp-game-lib-portable library, which is designed for small devices. The header file 'cglp.h' contains the functions, variables, macros, etc. available in crisp-game-lib-portable. The ported code for 'pinclimb.js' should be in 'gamePinClimb.c', and the ported code for 'thunder.js' should be in 'gameThunder.c'. For objects of variable number that exist in the game, add isAlive variable to the corresponding struct to manage them. Please port the following JavaScript code to C code using crisp-game-lib-portable.
-```
-(Place the JavaScript code for the crisp-game-lib game here)
-```
+if you come accross rnds(x) functions use rnd(-x,x), if you com across rnds(x,y) functions use rnd(x,y) * RNDPM(). if you com across rnd() without parameters use rnd(0,1). 
+VectorAdd requires 3 parameters the vector and the x and y so can't add 2 vector types, There exists a global thickness variable for bar, line and arc, replacing the parameter it had for the functions in js. 
+There also exists a global barCenterPosRatio, which is A value from 0 to 1 that defines where the center coordinates are on the `bar()` function and it's  default is 0.5 . 
+Also use the functions / macro's to handle the alive states and initalize them using the INIT_UNALIVED_ARRAY, and make use of the other array macro's when needed. also arc needs all the parameters set, 
+Knowing all this please port "gamedarkcave" the javascript game as closely as possible to the javascript  version by looking very closely at the javascript code
