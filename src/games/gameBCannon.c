@@ -280,7 +280,7 @@ static void update() {
 }
 
 void addGameBCannon() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }
 
 #undef float

@@ -53,7 +53,8 @@
 // Function to normalize angle to the range [0, 2π)
 #define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
 
-
+static float mouseX, mouseY;
+static int prevRealMouseX = 0, prevRealMouseY = 0;
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static int quit = 0;
@@ -1015,7 +1016,7 @@ void md_initView(int w, int h)
 {
     if(!Renderer)
         return;
-    
+   
     SDL_GetWindowSizeInPixels(SdlWindow, &WINDOW_WIDTH , &WINDOW_HEIGHT);
     float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
     float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
@@ -1046,7 +1047,10 @@ void md_initView(int w, int h)
     else
         gScale = gScaleX;
     glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
-    
+
+    mouseX = (realViewW >> 1);
+    mouseY = (realViewH >> 1);
+
     if(!scaledDrawing)
     {
         viewW = w;
@@ -1092,13 +1096,40 @@ static void update() {
     if(GameInput->Buttons.ButQuit)
         quit = 1;
     
-    setButtonState(GameInput->Buttons.ButLeft || GameInput->Buttons.ButDpadLeft, GameInput->Buttons.ButRight || GameInput->Buttons.ButDpadRight,
-        GameInput->Buttons.ButUp || GameInput->Buttons.ButDpadUp, GameInput->Buttons.ButDown || GameInput->Buttons.ButDpadDown, 
+    bool mouseUsed = getGame(currentGameIndex).usesMouse;
+    setButtonState(!mouseUsed && (GameInput->Buttons.ButLeft || GameInput->Buttons.ButDpadLeft), 
+        !mouseUsed && (GameInput->Buttons.ButRight || GameInput->Buttons.ButDpadRight),
+        !mouseUsed && (GameInput->Buttons.ButUp || GameInput->Buttons.ButDpadUp),
+        !mouseUsed && (GameInput->Buttons.ButDown || GameInput->Buttons.ButDpadDown), 
         GameInput->Buttons.ButB, GameInput->Buttons.ButA);
+    
+    if (mouseUsed)
+    {
+        if(GameInput->Buttons.ButRight)
+            mouseX += WINDOW_WIDTH /100;
+        
+        if(GameInput->Buttons.ButLeft)
+            mouseX -= WINDOW_WIDTH /100;
+            
+        if(GameInput->Buttons.ButUp)
+            mouseY -= WINDOW_HEIGHT /100;
+    
+        if(GameInput->Buttons.ButDown)
+            mouseY += WINDOW_HEIGHT /100;
 
-    float mouseX = ((GameInput->Buttons.MouseX - offsetX) / scale);
-    float mouseY = ((GameInput->Buttons.MouseY - offsetY) / scale);
-    setMousePos(mouseX, mouseY);
+        mouseX = clamp(mouseX, 0, WINDOW_WIDTH - 2*offsetX -1);
+        mouseY = clamp(mouseY, 0, WINDOW_HEIGHT - 2*offsetY -1);
+
+        if((prevRealMouseX != GameInput->Buttons.MouseX) || (prevRealMouseY != GameInput->Buttons.MouseY))
+        {
+            mouseX = ((GameInput->Buttons.MouseX - offsetX));
+            mouseY = ((GameInput->Buttons.MouseY - offsetY));
+            prevRealMouseX = GameInput->Buttons.MouseX;
+            prevRealMouseY = GameInput->Buttons.MouseY;
+        }
+
+        setMousePos(mouseX / scale, mouseY / scale);
+    }
 
     if ((!GameInput->PrevButtons.ButBack) && (GameInput->Buttons.ButBack))
     {
@@ -1192,6 +1223,17 @@ static void update() {
     }
 
     updateFrame();
+
+    // Draw a Little Cursor
+    if (mouseUsed && !isInGameOver)
+    {
+        Uint32 col = SDL_MapRGB(view->format, 255, 105, 180);
+        SDL_Rect dstHorz = {(int)(mouseX-3*wscale), (int)(mouseY-1*wscale), 7*wscale,3*wscale};
+        SDL_FillRect(view, &dstHorz, col);
+        SDL_Rect dstVert = {(int)(mouseX-1*wscale), (int)(mouseY-3*wscale), 3*wscale,7*wscale};
+        SDL_FillRect(view, &dstVert, col);
+    }
+
     if(scaledDrawing && !isInMenu && (overlay == 1))
     {
         SDL_Rect dst = { 0 };

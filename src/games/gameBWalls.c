@@ -188,5 +188,5 @@ static void update() {
 }
 
 void addGameBwalls() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

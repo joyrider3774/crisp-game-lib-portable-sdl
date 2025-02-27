@@ -235,5 +235,5 @@ static void update() {
 }
 
 void addGameBombup() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

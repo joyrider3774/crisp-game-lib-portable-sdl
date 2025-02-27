@@ -169,5 +169,5 @@ static void nextTimber() {
 }
 
 void addGameTimberTest() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

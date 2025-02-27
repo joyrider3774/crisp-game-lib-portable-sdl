@@ -239,5 +239,5 @@ static void update() {
 }
 
 void addGameDLaser() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

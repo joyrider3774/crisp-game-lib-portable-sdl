@@ -399,5 +399,5 @@ static Agent* getNearest(Agent* a) {
 }
 
 void addGameDFight() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, true, update);
 }

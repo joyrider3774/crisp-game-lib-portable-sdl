@@ -279,5 +279,5 @@ static void update() {
 }
 
 void addGameDivarr() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

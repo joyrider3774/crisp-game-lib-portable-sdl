@@ -466,5 +466,5 @@ static int placeCard(int idx, int ppi, Card* cards) {
 }
 
 void addGameCardq() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, true, update);
 }

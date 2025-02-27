@@ -258,5 +258,5 @@ static void update() {
 
 // Add game to the menu
 void addGameCatapult() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

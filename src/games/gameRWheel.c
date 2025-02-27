@@ -222,5 +222,5 @@ static void update() {
 }
 
 void addGameRWheel() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

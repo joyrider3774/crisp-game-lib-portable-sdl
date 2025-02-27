@@ -116,6 +116,7 @@ typedef struct {
   char (*characters)[CHARACTER_WIDTH][CHARACTER_HEIGHT + 1];
   int charactersCount;
   Options options;
+  int usesMouse;
   void (*update)(void);
 } Game;
 

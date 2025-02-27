@@ -296,5 +296,5 @@ static void update() {
 }
 
 void addGameBsfish() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

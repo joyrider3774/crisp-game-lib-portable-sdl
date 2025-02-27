@@ -269,5 +269,5 @@ static void update() {
 }
 
 void addGameSurvivor() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

@@ -128,5 +128,5 @@ static void update() {
 }
 
 void addGameFracave() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

@@ -406,5 +406,5 @@ static void update() {
 }
 
 void addGameLadderDrop() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

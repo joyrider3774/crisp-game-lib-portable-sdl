@@ -197,5 +197,5 @@ static void update() {
 }
 
 void addGameAerialBar() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

@@ -309,5 +309,5 @@ static void update() {
 }
 
 void addGameCateP() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

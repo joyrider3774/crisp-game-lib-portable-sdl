@@ -359,5 +359,5 @@ static void update() {
 }
 
 void addGameChargeBeam() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

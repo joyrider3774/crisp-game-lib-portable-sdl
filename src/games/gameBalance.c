@@ -169,5 +169,5 @@ static void update() {
 }
 
 void addGameBalance() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, true, update);
 }

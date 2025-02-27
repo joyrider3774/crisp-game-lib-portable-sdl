@@ -283,5 +283,5 @@ static void update() {
 }
 
 void addGameCounterB() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

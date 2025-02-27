@@ -52,6 +52,8 @@
 // Function to normalize angle to the range [0, 2pi]
 #define NORMALIZE_ANGLE(angle) (angle = fmodf(angle, 2 * M_PI), (angle < 0) ? (angle += 2 * M_PI) : angle)
 
+static float mouseX, mouseY;
+static int prevRealMouseX = 0, prevRealMouseY = 0;
 static int WINDOW_WIDTH = DEFAULT_WINDOW_WIDTH;
 static int WINDOW_HEIGHT = DEFAULT_WINDOW_HEIGHT;
 static int quit = 0;
@@ -953,7 +955,7 @@ void md_clearScreen(unsigned char r, unsigned char g, unsigned char b)
 void md_initView(int w, int h) 
 {
     if(!screen)
-        return;
+        return; 
     
     WINDOW_WIDTH = screen->w;
     WINDOW_HEIGHT = screen->h;
@@ -982,6 +984,9 @@ void md_initView(int w, int h)
     else
         gScale = gScaleX;
     glowSize = (float)DEFAULT_GLOW_SIZE / gScale * wscale ;
+
+    mouseX = (viewW >> 1);
+    mouseY = (viewH >> 1);
 
     if(view)
     {
@@ -1047,13 +1052,37 @@ static void update()
     int tmpX, tmpY;
     Uint8 butState = SDL_GetMouseState(&tmpX, &tmpY);
 
-    setButtonState(keys[BUTTON_LEFT] == 1, keys[BUTTON_RIGHT] == 1, keys[BUTTON_UP] == 1,
-        keys[BUTTON_DOWN] == 1, (keys[BUTTON_B] == 1) || (butState & SDL_BUTTON(3)), (keys[BUTTON_A] == 1) || (butState & SDL_BUTTON(1)));
+    bool mouseUsed = getGame(currentGameIndex).usesMouse;
+    setButtonState(!mouseUsed && keys[BUTTON_LEFT] == 1, !mouseUsed && keys[BUTTON_RIGHT] == 1, !mouseUsed && keys[BUTTON_UP] == 1,
+        !mouseUsed && keys[BUTTON_DOWN] == 1, (keys[BUTTON_B] == 1) || (butState & SDL_BUTTON(3)), (keys[BUTTON_A] == 1) || (butState & SDL_BUTTON(1)));
+  
+    if (mouseUsed)
+    {
+        if(keys[BUTTON_RIGHT] == 1)
+            mouseX += WINDOW_WIDTH /100;
+        
+        if(keys[BUTTON_LEFT] == 1)
+            mouseX -= WINDOW_WIDTH /100;
+            
+        if(keys[BUTTON_UP] == 1)
+            mouseY -= WINDOW_HEIGHT /100;
     
-    
-    float mouseX = ((tmpX - offsetX) / scale);
-    float mouseY = ((tmpY - offsetY) / scale);
-    setMousePos(mouseX, mouseY);
+        if(keys[BUTTON_DOWN] == 1)
+            mouseY += WINDOW_HEIGHT /100;
+
+        mouseX = clamp(mouseX, 0, WINDOW_WIDTH - 2*offsetX -1);
+        mouseY = clamp(mouseY, 0, WINDOW_HEIGHT - 2*offsetY -1);
+
+        if((prevRealMouseX != tmpX) || (prevRealMouseY != tmpY))
+        {
+            mouseX = tmpX - offsetX;
+            mouseY = tmpY - offsetY;
+            prevRealMouseX = tmpX;
+            prevRealMouseY = tmpY;
+        }
+
+        setMousePos(mouseX / scale, mouseY / scale);
+    }
 
     if ((prevKeys[BUTTON_VOLDOWN] == 0) && (keys[BUTTON_VOLDOWN] == 1))
     {
@@ -1146,7 +1175,18 @@ static void update()
         }
     }
     
-    updateFrame();  
+    updateFrame();
+    
+    // Draw a Little Cursor
+    if (mouseUsed && !isInGameOver)
+    {
+        Uint32 col = SDL_MapRGB(view->format, 255, 105, 180);
+        SDL_Rect dstHorz = {(int)(mouseX-3*wscale), (int)(mouseY-1*wscale), 7*wscale,3*wscale};
+        SDL_FillRect(view, &dstHorz, col);
+        SDL_Rect dstVert = {(int)(mouseX-1*wscale), (int)(mouseY-3*wscale), 3*wscale,7*wscale};
+        SDL_FillRect(view, &dstVert, col);
+    }
+    
     if(!isInMenu && (overlay == 1))
     {
         SDL_Rect dst = { 0 };

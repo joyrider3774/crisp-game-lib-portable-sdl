@@ -207,5 +207,5 @@ static void update() {
 }
 
 void addGameColorRoll() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

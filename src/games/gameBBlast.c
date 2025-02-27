@@ -210,5 +210,5 @@ static void update() {
 }
 
 void addGameBBlast() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, true, update);
 }

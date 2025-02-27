@@ -134,5 +134,5 @@ static void update() {
 }
 
 void addGameCirclew() {
-  addGame(title, description, NULL, 0, options, update);
+  addGame(title, description, NULL, 0, options, false, update);
 }

@@ -149,5 +149,5 @@ static void update() {
 }
 
 void addGameDarkCave() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, true, update);
 }

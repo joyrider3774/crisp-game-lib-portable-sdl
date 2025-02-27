@@ -367,5 +367,5 @@ static int checkErasingUp() {
 }
 
 void addGameBreedc() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, true, update);
 }

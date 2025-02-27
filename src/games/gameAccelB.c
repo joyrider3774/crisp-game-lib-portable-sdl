@@ -425,5 +425,5 @@ static void update() {
 }
 
 void addGameAccelB() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

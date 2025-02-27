@@ -269,5 +269,5 @@ static void checkSide(Vector* pos, float* angle, int* side, float* av, bool hasA
 }
 
 void addGameTwofaced() {
-    addGame(title, description, characters, charactersCount, options, update);
+    addGame(title, description, characters, charactersCount, options, false, update);
 }

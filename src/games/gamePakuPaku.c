@@ -232,5 +232,5 @@ static void update() {
 }
 
 void addGamePakuPaku() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }

@@ -220,5 +220,5 @@ static void update() {
 }
 
 void addGameFroooog() {
-  addGame(title, description, characters, charactersCount, options, update);
+  addGame(title, description, characters, charactersCount, options, false, update);
 }
