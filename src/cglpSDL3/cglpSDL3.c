@@ -1261,7 +1261,7 @@ static void update() {
     // Draw a Little Cursor
     if (mouseUsed && !isInGameOver)
     {
-        Uint32 col = SDL_MapRGB(view->format, 255, 105, 180);
+        Uint32 col = SDL_MapRGB(PIXELFORMAT, NULL, 255, 105, 180);
         SDL_Rect dstHorz = {(int)(mouseX-3*wscale), (int)(mouseY-1*wscale), 7*wscale,3*wscale};
         SDL_FillRect(view, &dstHorz, col);
         SDL_Rect dstVert = {(int)(mouseX-1*wscale), (int)(mouseY-3*wscale), 3*wscale,7*wscale};
