@@ -1594,7 +1594,8 @@ int main(int argc, char** argv)
 	                }
 	                if(!found)
 	                    memset(startgame, 0, 100);
-	            }                
+	            }
+                SDL_GetMouseState(&prevRealMouseX, &prevRealMouseY);                
                 GameInput = CInput_Create();
                 int skip = 10;
                 while(quit == 0)

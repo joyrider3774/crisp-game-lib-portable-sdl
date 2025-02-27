@@ -1495,6 +1495,7 @@ int main(int argc, char **argv)
                     memset(startgame, 0, 100);
             }
             int skip = 10;
+            SDL_GetMouseState(&prevRealMouseX, &prevRealMouseY);
             while(quit == 0)
             {
                 frameticks = SDL_GetTicks();
