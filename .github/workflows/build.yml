@@ -168,7 +168,7 @@ jobs:
       - if: ${{ matrix.runsontype == 'mac'}}
         name: Ad Hoc Code sign Appl Bundle (Mac)
         run: |
-          codesign -s - -f "./Release/${{matrix.name}}.app"
+          codesign --force --deep -s - "./Release/${{matrix.name}}.app"
           
       - if: ${{ matrix.runsontype != 'mac'}}
         name: Copy Game And Assets Other
