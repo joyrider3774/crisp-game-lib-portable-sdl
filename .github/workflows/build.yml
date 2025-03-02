@@ -164,6 +164,11 @@ jobs:
           cp -r "metadata/cgl files" "./Release/"
           cp -r "metadata/screenshots" "./Release/"
           cp "metadata/cglpsdl1-preview.png" "./Release/cglpsdl1-preview.png"
+      
+      - if: ${{ matrix.runsontype == 'mac'}}
+        name: Ad Hoc Code sign Appl Bundle (Mac)
+        run: |
+          codesign -s - -f "./Release/${{matrix.name}}.app"
           
       - if: ${{ matrix.runsontype != 'mac'}}
         name: Copy Game And Assets Other
