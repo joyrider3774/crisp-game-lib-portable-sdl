@@ -4,6 +4,8 @@ LIB_DIR = ./src/lib
 GME_DIR = ./src/games
 STATIC_LIBS = 0
 
+DEFINES ?= 
+
 OBJ_DIR = obj
 EXE=cglpsdl2
 
@@ -51,11 +53,11 @@ endif
 all: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CC) $(LDFLAGS) $(TARGET_ARCH) $(OBJS) -o $@ $(LDLIBS)
+	$(CC) $(LDFLAGS) $(DEFINES) $(TARGET_ARCH) $(OBJS) -o $@ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: %.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(INCS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEFINES) $(INCS) -c -o $@ $<
 
 $(OBJ_DIR):
 	mkdir -p $@
