@@ -1016,8 +1016,12 @@ void md_initView(int w, int h)
 {
     if(!Renderer)
         return;
-   
+
+#if (SDL_VERSION_ATLEAST(2,26,0))
     SDL_GetWindowSizeInPixels(SdlWindow, &WINDOW_WIDTH , &WINDOW_HEIGHT);
+#else 
+    SDL_GetWindowSize(SdlWindow, &WINDOW_WIDTH, &WINDOW_HEIGHT);
+#endif
     float wscalex = (float)WINDOW_WIDTH / (float)DEFAULT_WINDOW_WIDTH;
     float wscaley = (float)WINDOW_HEIGHT / (float)DEFAULT_WINDOW_HEIGHT;
     wscale = (wscaley < wscalex) ? wscaley : wscalex;
