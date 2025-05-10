@@ -6,7 +6,7 @@
 This is a repo containing sdl ports of the crisp games library which is a Minimal C-lang library for creating classic arcade-like mini-games running on devices and browsers. 
 Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
 
-
+10/05/2025: an updated playdate version is available in [release section](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/releases/download/v3.1/crisp-games-sdlport.pdx.zip)
 
 see [src/cglpSDL1](https://github.com/joyrider3774/crisp-game-lib-portable-sdl/tree/main/src/cglpSDL1) for SDL 1 Port
 - keyboard or mouse only
