@@ -16,6 +16,7 @@ static int baseColor;
 static int viewWidth, viewHeight;
 static int crankWay;
 static int crankOffTicks;
+static float mouseX, mouseY;
 
 typedef struct {
   LCDBitmap* sprite;
@@ -74,6 +75,44 @@ void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
   pd->graphics->drawBitmap(cp->sprite, (int)x, (int)y, kBitmapUnflipped);
 }
 
+static void loadHighScores()
+{
+	SDFile* saveStateFile = pd->file->open("savestate.srm", kFileReadData);
+    //does not exist
+    if (saveStateFile == NULL)
+        return;
+
+    int ret = 1;
+    int i = 0;
+	while ((ret > 0) && (i < gameCount))
+	{
+		ret = pd->file->read(saveStateFile, hiScores[i].title, sizeof(char) * 100);
+		if(ret <= 0)
+			break;
+		ret = pd->file->read(saveStateFile, &hiScores[i].hiScore, sizeof(int));
+        i++;
+    }
+	
+	pd->file->close(saveStateFile);
+}
+
+static void saveHighScores()
+{
+    SDFile* saveStateFile = pd->file->open("savestate.srm", kFileWrite);
+    //does not exist
+    if (saveStateFile == NULL)
+        return;
+
+    for (int i = 0; i < gameCount; i++)
+	{
+		pd->file->write(saveStateFile, hiScores[i].title, sizeof(char)* 100);
+		pd->file->write(saveStateFile, &hiScores[i].hiScore, sizeof(int));
+    }
+	
+	pd->file->close(saveStateFile);
+}
+
+
 static LCDPattern lcdPattern = {0,    0,    0,    0,    0,    0,    0,    0,
                                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -112,7 +151,7 @@ void md_drawRect(float x, float y, float w, float h, unsigned char r,
     }
     lcdPattern[i] = rotateLeft(p ^ 0xff, i * 3);
   }
-  pd->graphics->fillRect(xi, yi, wi, hi, &lcdPattern);
+  pd->graphics->fillRect(xi, yi, wi, hi, (LCDColor)&lcdPattern);
 }
 
 void md_clearView(unsigned char r, unsigned char g, unsigned char b) {
@@ -156,6 +195,8 @@ float md_getAudioTime() { return (float)pd->sound->getCurrentTime() / 44100; }
 void md_initView(int w, int h) {
   viewWidth = w;
   viewHeight = h;
+  mouseX = viewWidth >> 1;
+  mouseY = viewHeight >> 1;
   resetCharacterSprite();
 }
 
@@ -182,18 +223,49 @@ static int update(void* userdata) {
     crankWay = 0;
     crankOffTicks = 0;
   }
+
+  bool mouseUsed = getGame(currentGameIndex).usesMouse;
   pd->system->getButtonState(&buttonsCurrent, &buttonsPushed, &buttonsReleased);
-  setButtonState((buttonsCurrent & kButtonLeft) || crankWay == 1,
-                 (buttonsCurrent & kButtonRight) || crankWay == -1,
-                 (buttonsCurrent & kButtonUp) || crankWay == 1,
-                 (buttonsCurrent & kButtonDown) || crankWay == -1,
+  setButtonState(!mouseUsed && ((buttonsCurrent & kButtonLeft) || crankWay == 1),
+                 !mouseUsed && ((buttonsCurrent & kButtonRight) || crankWay == -1),
+                 !mouseUsed && ((buttonsCurrent & kButtonUp) || crankWay == 1),
+                 !mouseUsed && ((buttonsCurrent & kButtonDown) || crankWay == -1),
                  buttonsCurrent & kButtonB, buttonsCurrent & kButtonA);
+
+  if (mouseUsed)
+  {
+      if (buttonsCurrent & kButtonRight)
+          mouseX += viewWidth / 100;
+
+      if (buttonsCurrent & kButtonLeft)
+          mouseX -= viewWidth / 100;
+
+      if (buttonsCurrent & kButtonUp)
+          mouseY -= viewHeight / 100;
+
+      if (buttonsCurrent & kButtonDown)
+          mouseY += viewHeight / 100;
+
+      mouseX = clamp(mouseX, 0, viewWidth-1);
+      mouseY = clamp(mouseY, 0, viewHeight-1);
+
+    
+      setMousePos(mouseX, mouseY);
+  }
   updateFrame();
+  // Draw a Little Cursor
+  if (mouseUsed && !isInGameOver)
+  {
+      pd->graphics->fillEllipse(mouseX-2, mouseY-2, 4, 4, 0, 360, kColorWhite);
+      pd->graphics->fillEllipse(mouseX-1, mouseY-1, 2, 2, 0, 360, kColorBlack);
+      pd->graphics->fillEllipse(mouseX, mouseY, 1, 1, 0, 360, kColorXOR);
+  }
   //pd->system->drawFPS(0, 0);
   if (!isInMenu) {
     if ((buttonsCurrent & kButtonA) && (buttonsCurrent & kButtonB) &&
         (buttonsCurrent & kButtonUp) && (buttonsCurrent & kButtonRight)) {
-      goToMenu();
+      saveHighScores();
+	  goToMenu();
     }
   }
   return 1;
@@ -210,6 +282,7 @@ static void init() {
   pd->system->getCrankChange();
   initCharacterSprite();
   initGame();
+  loadHighScores();
   pd->system->setUpdateCallback(update, NULL);
 }
 
@@ -220,6 +293,10 @@ __declspec(dllexport)
   if (event == kEventInit) {
     pd = _pd;
     init();
+  }
+  
+  if (event == kEventTerminate) {
+    saveHighScores();
   }
   return 0;
 }

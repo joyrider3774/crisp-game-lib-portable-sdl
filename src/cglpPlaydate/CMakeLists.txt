@@ -25,8 +25,8 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
 
 # Game Name Customization
-set(PLAYDATE_GAME_NAME crisp-games)
-set(PLAYDATE_GAME_DEVICE crisp-games-DEVICE)
+set(PLAYDATE_GAME_NAME crisp-games-sdlport)
+set(PLAYDATE_GAME_DEVICE crisp-games-sdlport-DEVICE)
 
 project(${PLAYDATE_GAME_NAME} C)
 
@@ -39,6 +39,7 @@ if (TOOLCHAIN STREQUAL "armgcc")
 	target_include_directories(${PLAYDATE_GAME_DEVICE} PRIVATE ../lib)
 	target_sources(${PLAYDATE_GAME_DEVICE} PRIVATE src/syscalls.c)
 else()
+    add_compile_options(-D PLAYDATE_ARM_DEVICE)
 	add_library(${PLAYDATE_GAME_NAME} SHARED ./src/cglpPlaydate.c ${LibSources} ${GamesSources})
 	target_include_directories(${PLAYDATE_GAME_NAME} PRIVATE ../lib)
 endif()
