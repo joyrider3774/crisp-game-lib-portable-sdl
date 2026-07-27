@@ -145,6 +145,14 @@ AudioState audio_state = {0};
 
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
+// Open-addressed hash index into characterSprites, keyed by the same
+// hash md_drawCharacter() is passed. Holds sprite indices; -1 marks an
+// empty slot - see initCharacterSprite()/resetCharacterSprite() for the
+// reset and md_drawCharacter() for the probe/insert. Without this,
+// every glyph draw scanned up to 128 entries from index 0, with cost
+// growing as more distinct glyph/color combos got rendered during a
+// run (e.g. a menu paging through many differently-titled games).
+static int characterSpriteHashSlots[CHARACTER_PATTERN_HASH_TABLE_SIZE];
 
 static void resetGame(Game *game)
 {
@@ -413,6 +421,9 @@ static void initCharacterSprite() {
     for (int i = 0; i < MAX_CACHED_CHARACTER_PATTERN_COUNT; i++) {
         characterSprites[i].sprite = NULL;
     }
+    for (int i = 0; i < CHARACTER_PATTERN_HASH_TABLE_SIZE; i++) {
+        characterSpriteHashSlots[i] = -1;
+    }
     characterSpritesCount = 0;
     distanceTable = NULL;  // Initialize distance table pointer
 }
@@ -422,8 +433,11 @@ static void resetCharacterSprite() {
         SDL_FreeSurface(characterSprites[i].sprite);
         characterSprites[i].sprite = NULL;
     }
+    for (int i = 0; i < CHARACTER_PATTERN_HASH_TABLE_SIZE; i++) {
+        characterSpriteHashSlots[i] = -1;
+    }
     characterSpritesCount = 0;
-    
+
     if (distanceTable) {
         SDL_free(distanceTable->distances);
         SDL_free(distanceTable);
@@ -865,28 +879,37 @@ void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
                      float x, float y, int hash) {
     if(!view) return;
 
-    CharaterSprite *cp = NULL;
-    for (int i = 0; i < characterSpritesCount; i++) {
-        if ((characterSprites[i].hash == hash) && (characterSprites[i].sprite)) {
-            cp = &characterSprites[i];
-            break;
+    int slot = hash % CHARACTER_PATTERN_HASH_TABLE_SIZE;
+    if (slot < 0) {
+        slot += CHARACTER_PATTERN_HASH_TABLE_SIZE;
+    }
+    while (characterSpriteHashSlots[slot] != -1 &&
+           characterSprites[characterSpriteHashSlots[slot]].hash != hash) {
+        slot++;
+        if (slot >= CHARACTER_PATTERN_HASH_TABLE_SIZE) {
+            slot = 0;
         }
     }
-    
-    if (cp == NULL) {
-        cp = &characterSprites[characterSpritesCount];
-        cp->hash = hash;
+    CharaterSprite *cp = NULL;
+    if (characterSpriteHashSlots[slot] != -1) {
+        cp = &characterSprites[characterSpriteHashSlots[slot]];
+    }
+
+    if (cp == NULL && characterSpritesCount < MAX_CACHED_CHARACTER_PATTERN_COUNT) {
+        CharaterSprite *newCp = &characterSprites[characterSpritesCount];
+        newCp->hash = hash;
 
         SDL_Surface* tempSurface = createCharacterSurface(grid, scale, glowEnabled && !isInMenu ? glowSize: 0,
                 DEFAULT_GLOW_INTENSITY, glowEnabled && !isInMenu);
 
-
         if (tempSurface) {
-            cp->sprite = SDL_DisplayFormatAlpha(tempSurface);
+            newCp->sprite = SDL_DisplayFormatAlpha(tempSurface);
             SDL_FreeSurface(tempSurface);
-            
-            if (cp->sprite) {
+
+            if (newCp->sprite) {
+                characterSpriteHashSlots[slot] = characterSpritesCount;
                 characterSpritesCount++;
+                cp = newCp;
             }
         }
     }

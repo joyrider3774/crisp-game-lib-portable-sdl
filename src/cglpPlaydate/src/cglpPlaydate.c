@@ -24,16 +24,33 @@ typedef struct {
 } CharaterSprite;
 static CharaterSprite characterSprites[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterSpritesCount;
+// Open-addressed hash index into characterSprites, keyed by the same
+// hash md_drawCharacter() is passed. Holds sprite indices; -1 marks an
+// empty slot - see initCharacterSprite()/resetCharacterSprite() for the
+// reset and md_drawCharacter() for the probe/insert. Without this,
+// every glyph draw scanned up to 128 entries from index 0, with cost
+// growing as more distinct glyph/color combos got rendered during a
+// run (e.g. a menu paging through many differently-titled games) -
+// worth avoiding here especially, given Playdate's limited CPU.
+static int characterSpriteHashSlots[CHARACTER_PATTERN_HASH_TABLE_SIZE];
 
 static void initCharacterSprite() {
   for (int i = 0; i < MAX_CACHED_CHARACTER_PATTERN_COUNT; i++) {
     characterSprites[i].sprite =
         pd->graphics->newBitmap(CHARACTER_WIDTH, CHARACTER_HEIGHT, kColorClear);
   }
+  for (int i = 0; i < CHARACTER_PATTERN_HASH_TABLE_SIZE; i++) {
+    characterSpriteHashSlots[i] = -1;
+  }
   characterSpritesCount = 0;
 }
 
-static void resetCharacterSprite() { characterSpritesCount = 0; }
+static void resetCharacterSprite() {
+  for (int i = 0; i < CHARACTER_PATTERN_HASH_TABLE_SIZE; i++) {
+    characterSpriteHashSlots[i] = -1;
+  }
+  characterSpritesCount = 0;
+}
 
 static void createCharacterImageData(
     unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3]) {
@@ -57,22 +74,33 @@ void md_drawCharacter(unsigned char grid[CHARACTER_HEIGHT][CHARACTER_WIDTH][3],
   if (color == TRANSPARENT) {
     return;
   }
-  CharaterSprite* cp = NULL;
-  for (int i = 0; i < characterSpritesCount; i++) {
-    if (characterSprites[i].hash == hash) {
-      cp = &characterSprites[i];
-      break;
+  int slot = hash % CHARACTER_PATTERN_HASH_TABLE_SIZE;
+  if (slot < 0) {
+    slot += CHARACTER_PATTERN_HASH_TABLE_SIZE;
+  }
+  while (characterSpriteHashSlots[slot] != -1 &&
+         characterSprites[characterSpriteHashSlots[slot]].hash != hash) {
+    slot++;
+    if (slot >= CHARACTER_PATTERN_HASH_TABLE_SIZE) {
+      slot = 0;
     }
   }
-  if (cp == NULL) {
+  CharaterSprite* cp = NULL;
+  if (characterSpriteHashSlots[slot] != -1) {
+    cp = &characterSprites[characterSpriteHashSlots[slot]];
+  }
+  if (cp == NULL && characterSpritesCount < MAX_CACHED_CHARACTER_PATTERN_COUNT) {
     cp = &characterSprites[characterSpritesCount];
     cp->hash = hash;
     pd->graphics->pushContext(cp->sprite);
     createCharacterImageData(grid);
     pd->graphics->popContext();
+    characterSpriteHashSlots[slot] = characterSpritesCount;
     characterSpritesCount++;
   }
-  pd->graphics->drawBitmap(cp->sprite, (int)x, (int)y, kBitmapUnflipped);
+  if (cp != NULL) {
+    pd->graphics->drawBitmap(cp->sprite, (int)x, (int)y, kBitmapUnflipped);
+  }
 }
 
 static void loadHighScores()

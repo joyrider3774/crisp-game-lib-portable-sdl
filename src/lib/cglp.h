@@ -56,6 +56,11 @@
 #define MAX_CHARACTER_PATTERN_COUNT 26
 #define ASCII_CHARACTER_COUNT 127
 #define MAX_CACHED_CHARACTER_PATTERN_COUNT 128
+// Prime, and comfortably bigger than MAX_CACHED_CHARACTER_PATTERN_COUNT -
+// used to turn the character-pattern/sprite caches' lookup from an O(n)
+// linear scan into an O(1) hash-bucket lookup (see cglp.c and the
+// per-backend cglpSDL*.c files).
+#define CHARACTER_PATTERN_HASH_TABLE_SIZE 509
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -369,9 +369,21 @@ typedef struct {
 
 static CharacterPattern characterPatterns[MAX_CACHED_CHARACTER_PATTERN_COUNT];
 static int characterPatternsCount;
+// Open-addressed hash index into characterPatterns, keyed by the same
+// hash drawCharacter() computes per glyph. Holds pattern indices; -1
+// marks an empty slot. Without this, every single character/text draw
+// scanned up to 128 entries from index 0 (no move-to-front even), with
+// the cost growing as more distinct glyph/color combos got cached
+// during a run - e.g. a menu paging through many differently-titled
+// games. Table size is prime and well above the entry cap so a lookup
+// always terminates at an empty slot.
+static int characterPatternHashSlots[CHARACTER_PATTERN_HASH_TABLE_SIZE];
 
 static void initCharacter() {
   characterPatternsCount = 0;
+  for (int i = 0; i < CHARACTER_PATTERN_HASH_TABLE_SIZE; i++) {
+    characterPatternHashSlots[i] = -1;
+  }
   characterOptions.isMirrorX = characterOptions.isMirrorY = false;
   characterOptions.rotation = 0;
 }
@@ -460,12 +472,20 @@ static void drawCharacter(int index, float x, float y, bool _hasCollision,
                            characterOptions.isMirrorY,
                            characterOptions.rotation};
   int hash = getHashFromIntegers(hashBaseValues, 7);
-  CharacterPattern *cp = NULL;
-  for (int i = 0; i < characterPatternsCount; i++) {
-    if (characterPatterns[i].hash == hash) {
-      cp = &characterPatterns[i];
-      break;
+  int slot = hash % CHARACTER_PATTERN_HASH_TABLE_SIZE;
+  if (slot < 0) {
+    slot += CHARACTER_PATTERN_HASH_TABLE_SIZE;
+  }
+  while (characterPatternHashSlots[slot] != -1 &&
+         characterPatterns[characterPatternHashSlots[slot]].hash != hash) {
+    slot++;
+    if (slot >= CHARACTER_PATTERN_HASH_TABLE_SIZE) {
+      slot = 0;
     }
+  }
+  CharacterPattern *cp = NULL;
+  if (characterPatternHashSlots[slot] != -1) {
+    cp = &characterPatterns[characterPatternHashSlots[slot]];
   }
   if (cp == NULL) {
     if (characterPatternsCount >= MAX_CACHED_CHARACTER_PATTERN_COUNT) {
@@ -479,6 +499,7 @@ static void drawCharacter(int index, float x, float y, bool _hasCollision,
     cp->hash = hash;
     setColorGrid(isText ? textPatterns[index - '!'] : characters[index - 'a'],
                  cp->grid, color, &cp->hitBox);
+    characterPatternHashSlots[slot] = characterPatternsCount;
     characterPatternsCount++;
   }
   if (color > TRANSPARENT && x > -CHARACTER_WIDTH && x < viewSizeX &&
