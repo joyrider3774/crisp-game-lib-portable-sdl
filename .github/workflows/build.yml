@@ -14,30 +14,35 @@ jobs:
           - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe', SDL: 'SDL2'}
           - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
-          - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          - { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          - { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
-          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
-          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          - { runson: 'macos-26',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          - { runson: 'macos-15-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          - { runson: 'macos-26-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw64', env: 'x86_64', name: 'CglpSDL3', binsuffix: '.exe', SDL: 'SDL3'}
           - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL3', binsuffix: '.exe', SDL: 'SDL3'}
           - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-20.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'macos-10.15',      runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'macos-13',         runsontype: 'mac',     sys: 'usr',     env: 'intel',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-15',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-
+          - { runson: 'macos-26',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'macos-15-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'macos-26-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-22.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-22.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
 
     runs-on: ${{matrix.runson}}    
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           submodules: 'true'
           
@@ -53,7 +58,7 @@ jobs:
             mingw-w64-${{matrix.env}}-cmake
             mingw-w64-${{matrix.env}}-ninja
 
-      - if: ${{ matrix.runsontype == 'linux'}}
+      - if: ${{ matrix.runsontype == 'linux' || matrix.runsontype == 'appimage' }}
         name: install libsdl 2/3 dependencies
         run: |
           sudo apt update
@@ -99,7 +104,7 @@ jobs:
           cmake -G "Ninja" -DUSE_VENDORED_SDL=1 ..
           ninja
           
-      - if: ${{ matrix.runsontype != 'windows'}}
+      - if: ${{ matrix.runsontype != 'windows' && matrix.runsontype != 'appimage'}}
         name: Build Game Other
         run: |
           cd src/cglp${{matrix.SDL}}
@@ -107,6 +112,13 @@ jobs:
           cd build      
           cmake -DUSE_VENDORED_SDL=1 ..
           make
+          
+       - if: ${{ matrix.runsontype == 'appimage'}}
+        name: Build Game Appimage
+        run: |
+          chmod +x ./build-appimage.sh
+          ./build-appimage.sh
+      
 
       - if: ${{ matrix.runsontype == 'mac'}}
         name: Copy Game And Assets Mac
@@ -170,7 +182,7 @@ jobs:
         run: |
           codesign --force --deep -s - "./Release/${{matrix.name}}.app"
           
-      - if: ${{ matrix.runsontype != 'mac'}}
+      - if: ${{ matrix.runsontype != 'mac' && matrix.runsontype != 'appimage'}}
         name: Copy Game And Assets Other
         run: |
           mkdir ./Release
@@ -179,14 +191,22 @@ jobs:
           cp ./README.md "./Release/${{matrix.name}}/"
           cp ./LICENSE.txt "./Release/${{matrix.name}}/"
           
-      - if: ${{ matrix.runsontype != 'mac'}}
+      - if: ${{ matrix.runsontype != 'mac' && matrix.runsontype != 'appimage'}}
         run: |
           cp -r "metadata/cgl files" "./Release/${{matrix.name}}/"
           cp -r "metadata/screenshots" "./Release/${{matrix.name}}/"
           cp "metadata/cglpsdl1-preview.png" "./Release/${{matrix.name}}/cglpsdl1-preview.png"
          
-      - name: Store build
-        uses: actions/upload-artifact@v4
+      - if: ${{ matrix.runsontype != 'appimage'}}
+        name: Store build
+        uses: actions/upload-artifact@v7
         with:
           name: ${{matrix.name}}-${{matrix.runson}}_${{ matrix.env }}
           path: ./Release/
+      
+      - if: ${{ matrix.runsontype == 'appimage'}}
+        name: Store build (appimage)
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{matrix.name}}-${{matrix.runsontype}}_${{ matrix.env }}
+          path: ./dist/
