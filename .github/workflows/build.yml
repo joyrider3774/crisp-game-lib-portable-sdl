@@ -39,7 +39,7 @@ jobs:
           - { runson: 'ubuntu-22.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
 
-    runs-on: ${{matrix.runson}}    
+    runs-on: ${{matrix.runson}}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7
