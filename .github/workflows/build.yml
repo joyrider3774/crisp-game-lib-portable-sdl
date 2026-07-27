@@ -113,7 +113,7 @@ jobs:
           cmake -DUSE_VENDORED_SDL=1 ..
           make
           
-       - if: ${{ matrix.runsontype == 'appimage'}}
+      - if: ${{ matrix.runsontype == 'appimage'}}
         name: Build Game Appimage
         run: |
           chmod +x ./build-appimage.sh
