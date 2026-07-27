@@ -14,8 +14,8 @@ jobs:
           - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL2', binsuffix: '.exe', SDL: 'SDL2'}
           - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
-          - { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
-          - { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          #- { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
+          #- { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
           - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL2', binsuffix: '',     SDL: 'SDL2'}
@@ -27,8 +27,8 @@ jobs:
           - { runson: 'windows-latest',   runsontype: 'windows', sys: 'mingw32', env: 'i686',   name: 'CglpSDL3', binsuffix: '.exe', SDL: 'SDL3'}
           - { runson: 'ubuntu-24.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-22.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          #- { runson: 'ubuntu-26.04',     runsontype: 'linux',   sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          #- { runson: 'ubuntu-26.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-24.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'ubuntu-22.04-arm', runsontype: 'linux',   sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-14',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
