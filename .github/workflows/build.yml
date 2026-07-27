@@ -36,8 +36,8 @@ jobs:
           - { runson: 'macos-26',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-15-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-26-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-24.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-24.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          #- { runson: 'ubuntu-24.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          #- { runson: 'ubuntu-24.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
 
     runs-on: ${{matrix.runson}}
     steps:
