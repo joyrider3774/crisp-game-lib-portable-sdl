@@ -116,6 +116,7 @@ jobs:
       - if: ${{ matrix.runsontype == 'appimage'}}
         name: Build Game Appimage
         run: |
+          cd ./src/cglpSDL3
           chmod +x ./build-appimage.sh
           ./build-appimage.sh
       
@@ -209,4 +210,4 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{matrix.name}}-${{matrix.runsontype}}_${{ matrix.env }}
-          path: ./dist/
+          path: ./src/cglpSDL3/dist/
