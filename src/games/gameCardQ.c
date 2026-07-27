@@ -126,6 +126,8 @@ static void dropCardsInColumn(Card* cards, int idx) {
 }
 
 static void update() {
+    // Never reads a Collision result - all hits are decided by distance/overlap math.
+    hasCollision = false;
     if (!ticks) {
         // Initialize placed cards
         placedCardNumbers[0] = 2;

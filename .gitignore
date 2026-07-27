@@ -13,3 +13,24 @@ obj
 cglpsdl1.exe
 cglpsdl2.exe
 js
+/more games
+/ported
+/src/cglpPlaydate/crisp-games-sdlport.pdx.zip
+/src/cglpPlaydate/build
+/src/cglpPlaydate/build.pd
+/src/cglpPlaydate/crisp-games-sdlport.pdx
+/src/cglpPlaydate/crisp-games-sdlport-DEVICE.pdx
+/src/cglpSDL2/build_mingw64
+/src/cglpSDL2/build_vc
+/src/cglpSDL2/SDL2
+/src/cglpSDL2/vs
+/src/cglpSDL3/build_mingw64
+/src/cglpSDL3/build_wsl
+/src/cglpSDL3/SDL3
+/ported_games.csv
+/cglpsdl1.exe
+/cglpsdl2.exe
+/.cglpoverlays.dat
+/.cglpscore.dat
+/cglpsdl1
+/cglpsdl2

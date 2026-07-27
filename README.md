@@ -3,6 +3,8 @@
 
 <img src="./docs/screenshotFunkeyRgnano.gif" width="33%"><img src="./docs/screenshotRGB30.gif" width="33%"><img src="./docs/screenshotTrimuiSmartPro.gif" width="33%">
 
+This port currently includes **266 games**. A large number of them were ported to C with the help of Claude AI.
+
 This is a repo containing sdl ports of the crisp games library which is a Minimal C-lang library for creating classic arcade-like mini-games running on devices and browsers. 
 Re-implemented version of [crisp-game-lib](https://github.com/abagames/crisp-game-lib) for smaller devices. You can play [sample games in your browser](https://abagames.github.io/crisp-game-lib-portable/build/).
 
@@ -112,6 +114,18 @@ fine on a newer os but not the other way around. I did not test the Arm versions
 - [RG Nano](https://anbernic.com/products/rg-nano)
 - [SDL 1, 2 or 3 supported device](https://www.libsdl.org/)
 
+## Game Sources
+
+The individual games themselves come from a handful of upstream
+[ABAGames](https://github.com/abagames) repositories:
+
+- **[crisp-game-lib-games](https://github.com/abagames/crisp-game-lib-games)** -
+  games made with crisp-game-lib v1.0
+- **[crisp-game-lib-11-games](https://github.com/abagames/crisp-game-lib-11-games)** -
+  games made with crisp-game-lib v1.1
+- **[claude-one-button-game-creation](https://github.com/abagames/claude-one-button-game-creation)** -
+  one-button games designed with the help of Claude
+
 ## Sample game codes and reference
 
 - [Sample game codes](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/games)
@@ -212,6 +226,13 @@ Note: Some features are limited due to device resource limitations.
 1. Run `dev_c` npm script to watch [c files](https://github.com/abagames/crisp-game-lib-portable/tree/main/src/lib) and build [wasm files](https://github.com/abagames/crisp-game-lib-portable/tree/main/public/wasm)
 
 ## How to operate
+
+### Navigating the game selection menu
+
+- Up/Down: move the selection one game at a time
+- Left/Right: jump a whole page at a time (wraps past the last/first page)
+- A: launch the selected game
+- B: same as Down, move the selection down one game at a time
 
 ### Back to the game selection menu
 

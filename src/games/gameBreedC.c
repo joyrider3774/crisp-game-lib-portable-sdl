@@ -23,8 +23,8 @@ static Options options = {
 };
 
 #define GRID_SIZE 15
-#define COLOR_COUNT 4
-static const char* colors[COLOR_COUNT] = {"red", "green", "blue", "yellow"};
+#define BREEDC_COLOR_COUNT 4
+static const char* colors[BREEDC_COLOR_COUNT] = {"red", "green", "blue", "yellow"};
 
 static int grid[GRID_SIZE][GRID_SIZE];
 static int prevGrid[GRID_SIZE][GRID_SIZE];
@@ -46,8 +46,10 @@ static int checkErasingUp(void);
 static int drawGrid(void);
 
 static void update() {
+    // Never reads a Collision result - all hits are decided by distance/overlap math.
+    hasCollision = false;
     const int cgp = floor((float)GRID_SIZE / 2.0f);
-    
+
     if (!ticks) {
         // Initialize grids to -1
         for (int x = 0; x < GRID_SIZE; x++) {
@@ -96,7 +98,7 @@ static void update() {
     }
 
     if (grid[cgp][cgp] < 0) {
-        grid[cgp][cgp] = rnd(0, COLOR_COUNT);
+        grid[cgp][cgp] = rnd(0, BREEDC_COLOR_COUNT);
     }
 
     if (input.isJustPressed) {
@@ -228,7 +230,7 @@ static void addHorizontal() {
         const int c = prevGrid[cx][y];
         if (c >= 0) {
             const int nx = rnd(0, 1) < 0.5f ? -1 : 1;
-            const int nc = wrap(c + rnd(0, COLOR_COUNT - 1), 0, COLOR_COUNT);
+            const int nc = wrap(c + rnd(0, BREEDC_COLOR_COUNT - 1), 0, BREEDC_COLOR_COUNT);
             grid[cx + nx][y] = nc;
             grid[cx][y] = nc;
             grid[cx - nx][y] = c;
@@ -258,7 +260,7 @@ static void addVertical() {
         const int c = prevGrid[x][cy];
         if (c >= 0) {
             const int ny = rnd(0, 1) < 0.5f ? -1 : 1;
-            const int nc = wrap(c + rnd(0, COLOR_COUNT - 1), 0, COLOR_COUNT);
+            const int nc = wrap(c + rnd(0, BREEDC_COLOR_COUNT - 1), 0, BREEDC_COLOR_COUNT);
             grid[x][cy + ny] = nc;
             grid[x][cy] = nc;
             grid[x][cy - ny] = c;

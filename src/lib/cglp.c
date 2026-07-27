@@ -262,7 +262,16 @@ static void drawLine(float x, float y, float ox, float oy,
   }
   float lx = fabsf(ox);
   float ly = fabsf(oy);
-  float rn = ceilf(lx > ly ? lx / t : ly / t);
+  // A line is approximated by placing "rn" thickness x thickness squares
+  // evenly spaced from one end to the other (spacing = dominant-axis
+  // length / (rn - 1)), so gap-free coverage requires spacing <= t, i.e.
+  // rn - 1 >= len / t, i.e. rn >= len / t + 1. Plain ceil(len / t) (without
+  // the "+ 1") only guarantees rn >= len / t, which is NOT the same bound -
+  // whenever len / t already lands on an exact integer, ceil() leaves it
+  // unchanged instead of bumping up by one, and the resulting spacing ends
+  // up bigger than thickness: a real, provable gap between adjacent
+  // squares, not merely a floor()-rounding artifact.
+  float rn = ceilf(lx > ly ? lx / t : ly / t) + 1;
   if (rn < 3) {
     rn = 3;
   } else if (rn > 99) {
@@ -667,7 +676,7 @@ static void updateScoreBoards() {
 void addScore(float value, float x, float y) {
   score += value;
   int v = (int)value;
-  if (v > 9999999) {
+  if (v == 0 || v > 9999999) {
     return;
   }
   ScoreBoard *sb = &scoreBoards[scoreBoardsIndex];

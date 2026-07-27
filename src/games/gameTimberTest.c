@@ -49,6 +49,8 @@ static bool isShowingIndicator;
 static void nextTimber();
 
 static void update() {
+  // Never reads a Collision result - all hits are decided by distance/overlap math.
+  hasCollision = false;
   if (!ticks) {
     turnIndex = 0;
     pieceIndex = 0;

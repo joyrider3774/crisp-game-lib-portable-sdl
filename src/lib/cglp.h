@@ -16,7 +16,7 @@
 #include "machineDependent.h"
 #include "vector.h"
 
-#define MAX_GAME_COUNT 200
+#define MAX_GAME_COUNT 300
 
 #define FPS 60
 
@@ -59,6 +59,12 @@
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
+#endif
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923
+#endif
+#ifndef M_PI_4
+#define M_PI_4 0.78539816339744830962
 #endif
 
 /// \endcond
@@ -148,6 +154,15 @@ EXTERNC Collision text(char *msg, float x, float y);
 EXTERNC Collision character(char *msg, float x, float y);
 EXTERNC void play(int type);
 EXTERNC void addScore(float value, float x, float y);
+// Upstream crisp-game-lib's addScore(value, pos?) skips the popup entirely
+// when pos is omitted (still adds to score, just silently) - this port's
+// addScore() always takes x/y, so a JS call that omitted position should
+// pass this instead of a fabricated on-screen point: drawCharacter()'s own
+// view-bounds check (cglp.c) already skips drawing anything positioned
+// this far outside the view, for any viewSize this port uses, so the
+// popup silently never renders while addScore() still updates the total.
+#define SCORE_NO_POPUP_X -1000
+#define SCORE_NO_POPUP_Y -1000
 EXTERNC float rnd(float low, float high);
 EXTERNC int rndi(int low, int high);
 EXTERNC void gameOver();

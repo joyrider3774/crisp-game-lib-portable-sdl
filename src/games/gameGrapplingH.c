@@ -1,7 +1,7 @@
 #include "cglp.h"
 
 static char *title = "GRAPPLING H";
-static char *description = "\n[Tap]\n Release hook\n Hold anchor";
+static char *description = "[Tap]\n Release hook\n Hold anchor";
 
 #define CS static char characters[][CHARACTER_HEIGHT][CHARACTER_WIDTH + 1]
 CS = {{}};
@@ -42,6 +42,8 @@ static void addAnchorPoint(float x, float y) {
 }
 
 static void update() {
+  // Never reads a Collision result - all hits are decided by distance/overlap math.
+  hasCollision = false;
   if (!ticks) {
     INIT_UNALIVED_ARRAY(anchorPoints);
     anchorPointIndex = 0;

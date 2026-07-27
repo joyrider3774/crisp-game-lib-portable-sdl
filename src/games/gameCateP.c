@@ -6,28 +6,28 @@ static char *description = "[Tap]\n Turn & Shot";
 #define CS static char characters[][CHARACTER_HEIGHT][CHARACTER_WIDTH + 1]
 CS = {
     {
-        " llll  ",
-        "llllll ",
-        "lllrrr ",
-        "lllrrr ",
-        "llllll ",
-        " llll  ",
+        " llll ",
+        "llllll",
+        "lllrrr",
+        "lllrrr",
+        "llllll",
+        " llll ",
     },
     {
-        " llll  ",
-        "llllll ",
-        "lll    ",
-        "lll    ",
-        "llllll ",
-        " llll  ",
+        " llll ",
+        "llllll",
+        "lll   ",
+        "lll   ",
+        "llllll",
+        " llll ",
     },
     {
-        " l ll  ",
-        "     l ",
-        " lllll ",
-        "     l ",
-        " l ll  ",
-        "       ",
+        " l ll ",
+        "     l",
+        " lllll",
+        "     l",
+        " l ll ",
+        "      ",
     }
 };
 static int charactersCount = 3;

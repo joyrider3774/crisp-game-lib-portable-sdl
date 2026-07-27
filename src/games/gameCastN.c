@@ -20,7 +20,7 @@ CS = {
         "l ll l",
         "llllll",
         "l llll",
-        "  ll   ",
+        "  ll  ",
     },
     {
         "      ",

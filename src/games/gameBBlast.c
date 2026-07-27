@@ -41,6 +41,8 @@ static float radius;
 static float radiusSlowTicks;
 
 static void update() {
+    // Never reads a Collision result - all hits are decided by distance/overlap math.
+    hasCollision = false;
     if (!ticks) {
         INIT_UNALIVED_ARRAY(balls);
         ballIndex = 0;
