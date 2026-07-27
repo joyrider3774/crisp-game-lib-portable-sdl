@@ -36,8 +36,8 @@ jobs:
           - { runson: 'macos-26',         runsontype: 'mac',     sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-15-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
           - { runson: 'macos-26-intel',   runsontype: 'mac',     sys: 'usr',     env: 'x86_64', name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-22.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
-          - { runson: 'ubuntu-22.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-24.04',     runsontype: 'appimage',sys: 'usr',     env: 'x64',    name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
+          - { runson: 'ubuntu-24.04-arm', runsontype: 'appimage',sys: 'usr',     env: 'arm64',  name: 'CglpSDL3', binsuffix: '',     SDL: 'SDL3'}
 
     runs-on: ${{matrix.runson}}
     steps:
@@ -62,9 +62,9 @@ jobs:
         name: install libsdl 2/3 dependencies
         run: |
           sudo apt update
-          sudo apt-get install -y libglib2.0-dev libcairo2-dev libpango1.0-dev libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
+          sudo apt-get install -y build-essential cmake git wget patchelf libxtst-dev libglib2.0-dev libcairo2-dev libpango1.0-dev libsndio-dev libasound2-dev libdbus-1-dev libibus-1.0-dev libjack-dev libdrm-dev libudev-dev libgl1-mesa-dev libgles2-mesa-dev libsndio-dev libwayland-dev libxkbcommon-dev wayland-protocols qtbase5-dev libpulse-dev libsamplerate0-dev libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev libxrandr-dev libxss-dev libdrm-dev libgbm-dev libwayland-dev libxkbcommon-dev
           #try these 1 by 1 as they are different on different ubuntu versions
-          for i in libsndio7.0 libsndio7.1 libsndio7.2 libsndio-dev libasound2-dev libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev libpipewire-dev; do sudo apt-get install -y $i || true; done
+          for i in libsndio7.0 libsndio7.1 libsndio7.2 libsndio-dev libasound2-dev libdecor-0-dev libdecoration0-dev libpipewire-0.3-dev libpipewire-dev liburing-dev; do sudo apt-get install -y $i || true; done
         
       - if: matrix.runson == 'ubuntu-20.04'
         name: Install libsdl 2/3 extra dependencies (Ubuntu 20.04)
