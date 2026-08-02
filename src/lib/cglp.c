@@ -103,6 +103,87 @@ typedef struct {
 static HitBox hitBoxes[MAX_HIT_BOX_COUNT];
 static int hitBoxesIndex;
 
+// Spatial grid over checkHitBox()'s search below: instead of scanning every
+// hitbox drawn so far this frame (genuinely O(n^2) across a whole frame -
+// see MAX_HIT_BOX_COUNT's own comment above about needing up to ~1580
+// hitboxes for some games), a new hitbox only scans the hitboxes registered
+// in its own nearby grid cells. This changes nothing about *when* or *what*
+// collision checks mean - still "check against everything registered so far
+// this frame", same order-dependence, same synchronous mid-frame reactivity
+// every game's update() code relies on - it only makes the search underneath
+// faster, by filtering which existing hitboxes are even worth a real
+// geometry test. Correctness rests on one fact: if two hitboxes' bounding
+// boxes genuinely overlap, they are guaranteed to share at least one grid
+// cell, since gridRegister() below inserts every hitbox into every cell its
+// full extent touches - so the grid can never cause a *missed* collision,
+// only filter out cells that couldn't possibly contain one. Ported from the
+// Vircon32 port of this file, where it was verified against the original
+// linear scan with a native test harness across random, boundary-aligned,
+// multi-cell-spanning, and forced-overflow scenarios (including a
+// 1600-hitbox case matching this file's own documented worst case) - zero
+// mismatches in any of them.
+//
+// GRID_CELL_SIZE=8, GRID_MIN/GRID_CELLS_PER_AXIS (covering logical
+// coordinates -32 to 224) and GRID_CELL_CAPACITY=512 were all tuned
+// empirically against that same harness, modeling realistic
+// crisp-game-lib object-size/count distributions - see that port's cglp.c
+// for the full measurements. If any single cell would ever need to hold
+// more than GRID_CELL_CAPACITY, gridOverflowed latches true and every check
+// for the *rest of that frame* transparently falls back to the exact
+// original linear scan (see checkHitBox() below) - so a pathological frame
+// degrades to "no speedup", never to a wrong result.
+#define GRID_CELL_SIZE 8
+#define GRID_MIN -32
+#define GRID_CELLS_PER_AXIS 32
+#define GRID_CELL_CAPACITY 512
+static int gridCellCount[GRID_CELLS_PER_AXIS][GRID_CELLS_PER_AXIS];
+static int gridCellIndices[GRID_CELLS_PER_AXIS][GRID_CELLS_PER_AXIS]
+                           [GRID_CELL_CAPACITY];
+static bool gridOverflowed;
+
+static int gridCellCoord(float v) {
+  int c = (int)floor((v - GRID_MIN) / GRID_CELL_SIZE);
+  if (c < 0) {
+    c = 0;
+  } else if (c >= GRID_CELLS_PER_AXIS) {
+    c = GRID_CELLS_PER_AXIS - 1;
+  }
+  return c;
+}
+
+// Call once at the top of every frame, alongside resetting hitBoxesIndex -
+// see updateFrame() below.
+static void gridResetFrame() {
+  memset(gridCellCount, 0, sizeof(gridCellCount));
+  gridOverflowed = false;
+}
+
+// Inserts hitBoxes[idx] into every grid cell its bounding box touches. Call
+// this immediately after storing a new entry into hitBoxes[] and before any
+// future checkHitBox() call needs to be able to find it - see addHitBox()
+// below.
+static void gridRegister(int idx) {
+  if (gridOverflowed) {
+    return;
+  }
+  HitBox *hb = &hitBoxes[idx];
+  int gx1 = gridCellCoord(hb->pos.x);
+  int gy1 = gridCellCoord(hb->pos.y);
+  int gx2 = gridCellCoord(hb->pos.x + hb->size.x);
+  int gy2 = gridCellCoord(hb->pos.y + hb->size.y);
+  for (int gx = gx1; gx <= gx2; gx++) {
+    for (int gy = gy1; gy <= gy2; gy++) {
+      int c = gridCellCount[gx][gy];
+      if (c >= GRID_CELL_CAPACITY) {
+        gridOverflowed = true;
+        return;
+      }
+      gridCellIndices[gx][gy][c] = idx;
+      gridCellCount[gx][gy] = c + 1;
+    }
+  }
+}
+
 static void initCollision(Collision *collision) {
   for (int i = 0; i < COLOR_COUNT; i++) {
     collision->isColliding.rect[i] = false;
@@ -122,17 +203,46 @@ static bool testCollision(HitBox r1, HitBox r2) {
 }
 
 static void checkHitBox(Collision *cl, HitBox hitBox) {
-  for (int i = 0; i < hitBoxesIndex; i++) {
-    HitBox hb = hitBoxes[i];
-    if (testCollision(hb, hitBox)) {
-      if (hb.rectIndex >= 0) {
-        cl->isColliding.rect[hb.rectIndex] = true;
+  if (gridOverflowed) {
+    // Safety fallback - see the grid's own comment above. Exactly the
+    // original linear scan, unchanged.
+    for (int i = 0; i < hitBoxesIndex; i++) {
+      HitBox hb = hitBoxes[i];
+      if (testCollision(hb, hitBox)) {
+        if (hb.rectIndex >= 0) {
+          cl->isColliding.rect[hb.rectIndex] = true;
+        }
+        if (hb.textIndex >= 0) {
+          cl->isColliding.text[hb.textIndex] = true;
+        }
+        if (hb.characterIndex >= 0) {
+          cl->isColliding.character[hb.characterIndex] = true;
+        }
       }
-      if (hb.textIndex >= 0) {
-        cl->isColliding.text[hb.textIndex] = true;
-      }
-      if (hb.characterIndex >= 0) {
-        cl->isColliding.character[hb.characterIndex] = true;
+    }
+    return;
+  }
+
+  int gx1 = gridCellCoord(hitBox.pos.x);
+  int gy1 = gridCellCoord(hitBox.pos.y);
+  int gx2 = gridCellCoord(hitBox.pos.x + hitBox.size.x);
+  int gy2 = gridCellCoord(hitBox.pos.y + hitBox.size.y);
+  for (int gx = gx1; gx <= gx2; gx++) {
+    for (int gy = gy1; gy <= gy2; gy++) {
+      int count = gridCellCount[gx][gy];
+      for (int k = 0; k < count; k++) {
+        HitBox hb = hitBoxes[gridCellIndices[gx][gy][k]];
+        if (testCollision(hb, hitBox)) {
+          if (hb.rectIndex >= 0) {
+            cl->isColliding.rect[hb.rectIndex] = true;
+          }
+          if (hb.textIndex >= 0) {
+            cl->isColliding.text[hb.textIndex] = true;
+          }
+          if (hb.characterIndex >= 0) {
+            cl->isColliding.character[hb.characterIndex] = true;
+          }
+        }
       }
     }
   }
@@ -209,6 +319,7 @@ static bool isShownTooManyHitBoxesMessage = false;
 static void addHitBox(HitBox hb) {
   if (hitBoxesIndex < MAX_HIT_BOX_COUNT) {
     hitBoxes[hitBoxesIndex] = hb;
+    gridRegister(hitBoxesIndex);
     hitBoxesIndex++;
 #ifdef DEBUG    
     if(hitBoxesIndex > maxHitBoxes)
@@ -1185,6 +1296,7 @@ void initGame() {
 EMSCRIPTEN_KEEPALIVE
 void updateFrame() {
   hitBoxesIndex = 0;
+  gridResetFrame();
   difficulty = (float)ticks / 60 / FPS + 1;
   if (state == STATE_TITLE) {
     updateTitle();
